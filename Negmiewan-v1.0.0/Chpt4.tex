@@ -1,0 +1,276 @@
+\chapter{可视化软件}
+\section{Paraview}
+
+\subsection{Paraview的安装}
+Paraview在Windows和Linux都能安装使用;因为服务器问题,建议电脑本地和虚拟机都安装一下,\href{https://www.paraview.org/download/}{下载地址};至于windows就不详细介绍安装了;Linux虚拟机上,用sudo apt-get install paraview安装,用库里相对旧一些的版本应该也没有问题;
+
+\subsection{Paraview的基本操作} \label{Parabasis}
+先说一下Paraview打开问题;用Paraview打开vtu/dat文件时,可以在命令行输入"Paraview xx.vtu"命令打开,也可以用"Paraview"先呼出GUI界面,然后在用File>>Open打开(Windows只能通过这种方式);
+\par
+程序成功加载后,按左侧的"\textbf{Apply}"键确认进行渲染;渲染成功后界面上应该能够看到网格的素体轮廓(图示见第\ref{DishomoExtrude}小节);上方和"Apply"下方都会有一栏可选菜单显示"Solid Color",此处可以调换显示内容;\par
+
+其他的操作和基本按键见下节;\par
+
+做数据的曲线图,Paraview功能不太行,个人建议保存切片数据用Matlab或者Python画图(当然,如果会用R语言,也可以用R作图);
+
+\subsubsection{基本按键与功能介绍}
+
+
+\subsubsection{切片(Slice)制作}
+
+
+
+\subsubsection{寻找数据(Find Data)}
+
+
+\subsubsection{作沿线的流速分布图}
+先介绍一个简单些的办法:\par
+
+首先选中流场,右键为其Add Filter,在Alphabet中找到Plot Over Line添加即可,然后在左侧栏调节初始和终止点的位置, Resolution是采样点的数量;这个方式的优点在于可以直接用空间坐标而不是采样点标号作为横坐标,但缺点在于没办法提取保存数据;以下介绍另一种方式;\par
+
+Paraview取数据的能力比较奇怪:它不太支持函数化操作:取一条曲线根据某一坐标来绘制流速分布的图线;以下以一个圆管的某一切片举例进行方法说明;\par
+\textcolor{red}{先介绍如何在一条直线上导出流速分布};
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.25]{Round_Slice_Face.png}
+	\caption{z方向流速(w)切片云图}
+	\label{roundsliceface}
+\end{figure}
+
+
+首先,在如上的图\ref{roundsliceface}($xy$平面,$z=3$,上图为z方向速度的切片云图)上先取一条直线(直接创建直线段即可,数据源是整个流场或者是包含直线段的这个切片都无所谓);设置直线的时候,需要设置直线的起点与终点,还有直线上的采样点个数(下方Resolution)三个信息,从下图\ref{addline}的入口添加即可;
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.5]{Add_Line.png}
+	\caption{线(Line)的添加}
+	\label{addline}
+\end{figure}
+选中左侧栏的Line,在下方的信息处便能够对直线的属性进行修改,修改完成点击"Apply"(图\ref{Lineinfo}为修改的信息项,图\ref{Lineinround}为直线图示);\par
+
+
+\begin{figure}[H]
+	\centering  %图片全局居中
+	\subfigure[直线信息]{
+		\label{Lineinfo}
+		\includegraphics[width=0.45\textwidth]{Line_Info.png}}
+	\subfigure[直线图示]{
+		\label{Lineinround}
+		\includegraphics[width=0.45\textwidth]{Line_in_Round.png}}
+	\label{lineresample}
+\end{figure}
+
+然后,点击左侧的新建的Line,点击右键为其添加滤波器(Filter),路径:-> Alphabet -> Resample from Dataset,如图\ref{Resampledataset};\par
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.3]{Resample.png}
+	\caption{对直线从数据集中采样}
+	\label{Resampledataset}
+\end{figure}
+
+然后,会出现一个对话框,让用户选择数据来源和采样的导出对象;其中的Source data arrays就选择最初的流场就可以(如图\ref{Resamplefrom},做好的切片也行),Destination mesh选择此处需要完成重采样工作的Line(如图\ref{Resampleto}),再然后按ok键确认即可;
+
+\begin{figure}[H]
+	\centering  %图片全局居中
+	\subfigure[Source data array]{
+		\label{Resamplefrom}
+		\includegraphics[width=0.45\textwidth]{Resample_From.png}}
+	\subfigure[Destination mesh]{
+		\label{Resampleto}
+		\includegraphics[width=0.45\textwidth]{Resample_To.png}}
+	\label{Fig.main}
+\end{figure}
+
+在按下ok后,左侧会出现Resample的新Object,选中按下边的Apply,并右键添加-> Alphabet -> Plot Data滤波器(如图\ref{Plotdata});此后,左侧会出现一个plotdata的Object,选中并将其可视化(眼睛处)即可得到直线上的速度分布图线(在File->save screenshot处可以保存图线的截图);
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.3]{Plot_Data.png}
+	\caption{绘制直线上的速度分布图线}
+	\label{Plotdata}
+\end{figure}
+
+然后是任一条线沿线的采样;原理和上述过程基本相同,在第一步Source部分添加Geometry -> Poly Line Source 或者Spline Source,然后依次在下方输入线上点的坐标来生成一个Spline近似所求(其余步骤均相同,略);
+
+
+另外,\textcolor{red}{也可以利用Python对保存的数据进行绘图}.\par
+首先,需要选中左侧边栏的\textcolor{red}{ResampleWithDataset},然后在file选项里找到\textcolor{red}{save data},保存数据为csv文件,选中Point data,并选择需要保存的数据内容,利用Python进行画图的脚本此处也留做参考:
+
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+data_base1 = pd.read_csv("data_1.csv", header=0, names
+				=["u1","v1","w1","x","y","z"])
+data_base2 = pd.read_csv("data_2.csv", header=0, names
+				=["u2","v2","w2","x","y","z"])
+
+plt.plot(data_base1["z"],data_base1["v1"], label="case1")
+plt.plot(data_base2["z"],data_base2["v2"], label="case2",
+					       color="violet")
+# plt.yscale('log')
+plt.xlabel("z (streamwise)")
+plt.ylabel("pulse velocity")
+plt.legend()
+# plt.ylabel("velocity fluctuation")
+
+plt.show()
+\end{lstlisting}
+\par
+
+
+\subsubsection{求截面的平均速度(Q)}
+流量法;此处的平均速度是用体平均法算出来的;这个其实比较麻烦,具体的操作方法与文件格式有关系;\par
+先说vtu格式的文件;还是以以上切片为例,若想求其面平均速度,就要对其添加Integrate Variables滤波器来实现(Add Filter -> Alphabet);在对其添加滤波器后,可以在右侧的显示栏中看到如图 界面,
+
+
+\subsubsection{Python Shell}
+
+
+\subsection{Paraview的远程部署}
+
+
+\section{Tecplot}
+
+\subsection{Tecplot的安装}
+
+\subsection{Tecplot的基本操作}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{gnuplot}
+
+\subsection{快速上手}
+从\href{https://zhuanlan.zhihu.com/p/356438078}{知乎}摘的,这是一段急速入门的万用代码:
+
+\begin{lstlisting}[numbers=left,frame=single]
+############  <100行代码急速入门Gnuplot数据绘图   ############
+### "#" 后边是注释
+### 首先设置输出的格式，支持pdf,png,eps等常用格式
+set terminal pngcairo size 1000,1000 font 'Times New Roman,10'   ## 格式，大小和字体
+set output "plot.png"  ###输出的文件名
+
+#set terminal pdfcairo size 20cm,20cm font 'Times New Roman,12'  ## 
+#set output "plot.pdf"
+
+#set terminal epscairo size 20cm,20cm font 'Times New Roman,12'  ## 
+#set output "plot.eps"
+
+### 可以定义变量和宏，便于后边重复使用
+sx = "set xrange "  ## 例如后边当成宏来引用：@sx ，而不是使用 
+                    ## "set xrange"，你可缩减代码量
+
+### 定义变量，用来设置上下左右的边缘和子图间距离
+left=0.1           
+right=0.95
+bottom=0.1
+top="0.95"
+hspace="0.1"
+wspace="0.15"
+
+###因为是要一张图里4个子图，所以启用了多图模式：
+set multiplot layout 2,2 spacing @hspace,@wspace margins left,
+                                             right,bottom,@top
+
+########## 子图 (1): 绘制函数，设置基本的元素如：
+########## 标题、坐标范围、图例等
+set label "(1)" at graph 0.02,0.03 font ',20' textcolor rgb 'red'
+set title "example"
+set xlabel "This is xlabel with {/Symbol a}=0.1 to 100"
+set ylabel "This is ylabel with X^2_3"
+
+set key top right Left reverse font 'Times New Roman,15'  
+###设置图例格式：位置、字体等
+
+f(x)=sin(x)/x          ###定义函数
+set xrange [0:100]     ###设置x轴范围
+set yrange [-0.5:1.0]  ###设置y轴范围
+set xtics scale 3      ###设置x轴的刻度的长度，是默认的3倍长
+set mxtics 10          ###x轴子刻度的数目
+set mytics 5           ###y轴子刻度的数目
+set log x              ###x轴设置成log
+set style fill pattern 1
+### plot命令开始绘图并设置参数：
+plot f(x) w line linetype 1 pointtype 5 ps 1.0 lc 2 lw 4,\
+f(x) w filledcurves y=0.5 lc rgb 'blue'
+### 上边用到了缩写ps=pointsize.其他也有缩写：
+### 如line=l, linetype=lt, pointtype=pt等等
+
+######### 子图 (2): 数据文件绘图和拟合
+
+reset           ### Gnuplot会继承上边的命令，
+                ### 所以需要reset取消之前所有的设置
+set title "fitting functions"
+set label "(2)" at graph 0.02,0.03 font ',20'  
+                              textcolor rgb 'red'
+@sx [0:11]      ###这里引用了宏
+set yrange [0:11]
+set key bottom right font ",14" spacing 2
+g(x) = a*x**2 + b*x + c         ###定义函数并拟合，参数为a,b,c
+fit g(x) "data.txt" u 1:2 via a,b,c ###定义函数并拟合
+key_g= sprintf("fits without yerror:\ng(x) = %5.3f*x^2 + 
+                                       %5.3f*x + %5.3f",a,b,c)
+h(x) = d*x**2 + e*x + f
+fit h(x) "data.txt" u 1:2:3 yerror via d,e,f
+key_h= sprintf("fits with yerror:\nh(x) = %5.3f*x^2 + 
+                                       %5.3f*x + %5.3f",d,e,f)
+set xlabel 'xxxx' rotate by 45
+plot "data.txt" u 1:2:3 w yerror pt 5 ps 1.0 lc 
+                                     rgb 'blue' title "data",\
+g(x) w line linecolor rgb 'red' title key_g,\
+h(x) w l lc rgb 'green' title key_h
+
+######### 子图 (3)：统计和填充
+reset
+set key left top box
+set label "(3)" at graph 0.02,0.03 font ',20'  
+                                            textcolor rgb 'red'
+df='data.txt'                ###这里使用文件里的数据绘图
+
+stats df u 1:2 name "A"      
+###统计数据的1和2列，并将统计结果存入A中
+
+print A_min_x, A_min_y       
+###可以打印出A中统计的x的最大和最小值
+
+@sx [A_min_x-1: A_max_x + 1] ###根据统计数据设置x轴范围
+set yr [A_min_y-1: A_max_y + 1]
+set arrow from A_min_x,A_min_y+2 to A_min_x,A_min_y ###绘制箭头
+set label 'Min.' at A_min_x,A_min_y+2.3 center
+set arrow from A_max_x,A_max_y-2 to A_max_x,A_max_y
+set label 'Max.' at A_max_x,A_max_y-2.3 center front
+set xlabel 'xxxx' textcolor rgb 'red'
+set style fill solid 0.5 
+#set style fill pattern 3
+plot df u 1:2 w filledcurves y=2 lc rgb 'seagreen' title 'fill 
+                                                   with y=2',\
+df u 1:2 w lp pt 4 ps 0.9 lc rgb 'red' lw 2,\
+[3:6] A_mean_y w l dt '--' lw 2 lc rgb 'black' title "mean"
+
+######## 子图 (4):直方图
+reset
+set label "(4)" at graph 0.02,0.03 font ',20'  
+                                             textcolor rgb 'red'
+set style data histogram
+set style fill solid 1.0 border lt -1 
+set boxwidth 1.0
+set key at 1.5,7  box font ',15' reverse
+set yr [0:10]
+set xtics ("A" 0, "B" 1, "C" 2, "{/Symbol b}" 3, "{/Symbol S}" 4)
+set xlabel 'xxxx' offset 0,-1
+plot "data.txt" u 1 title 'histogram' lc rgb 'seagreen',\
+"data.txt" u 0:($1+0.5):1 w labels title ""
+
+unset multiplot  ###退出多图模式，完成绘图并保存
+\end{lstlisting}
+\par
+
+
+

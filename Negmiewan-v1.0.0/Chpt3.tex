@@ -1,0 +1,149 @@
+\chapter{Gmsh使用指南}
+\section{软件安装}
+建议安装Linux版本(Windows版与Nektar++耦合不太方便);\par
+如果想要省些功夫,或者安装较低版本的Gmsh亦能够满足需求,则命令行运行以下代码即可
+\begin{lstlisting}
+	sudo apt-get install gmsh
+\end{lstlisting}
+
+不过,建议安装较高版本的gmsh,对现用及更新后的Nektar软件相对友好;以下主要介绍一下较高版本的Gmsh安装;\par
+
+可选用的方式有两种,一种是直接下载\href{http://www.gmsh.info/bin/}{免安装的版本};\par
+另一种是下载源码包,在本地电脑编译安装,此处简单介绍一下.\par
+第一步,从官网下载地址下载\href{http://www.gmsh.info/src/}{安装包}到Linux本地(或者直接用\href{https://pan.baidu.com/s/1CmeE9yY8ChXeBrb2mMIzXA?pwd=xxwz}{现成的4.11.0版源码包}),再选好文件夹进行解压(利用归档管理器或者从终端打开执行tar -zxvf命令解压);\par
+第二步,打开解压后的文件夹,右键选择打开终端,输入以下命令
+\begin{lstlisting}
+	cmake -DENABLE_BUILD_DYNAMIC=1 .. 
+	make 
+	make install
+\end{lstlisting}
+\par
+以上过程中会用到cmake工具,这个在安装Nektar++时已经安装过了;等待安装好就可以了;详细的安装细节也可以参考压缩包下的Readme文件;
+
+
+\section{网格编写逻辑}
+网格的质量对模拟结果的准确性有很大影响.以下是评价有限元网格好坏的一些常见标准：\par
+1.\textcolor{red}{单元形状}：理想情况下，网格单元应接近规则形状，例如，对于二维问题，三角形应尽可能接近等边三角形，四边形应尽可能接近正方形或长方形。对于三维问题，四面体和六面体的形状也有类似要求.五面体过渡网格尽可能少.\par
+2.\textcolor{red}{单元尺度}：单元的尺度应该与物理问题的特征尺度相匹配。对于变化剧烈的区域，如边界层，应使用较小的单元。单元应该适当地进行加密和放大.\par
+3.\textcolor{red}{单元的扭曲度}：扭曲的单元可能会导致低效和不准确的结果。应尽量避免高度扭曲的单元.\par
+4.\textcolor{red}{过渡区的单元形状}：在网格精细区与粗糙区之间过渡时，过渡应尽可能平滑，以避免大的单元与小的单元直接相接，防止导致解算稳定性和准确性下降.必要的时候为尽可能平滑,可以适度调整网格,做一些扭曲.\par
+5.\textcolor{red}{是否满足问题的对称性}：如果问题具有几何或物理对称性，最好使用网格来尊重这种对称性，以减少计算量并提高计算效率.\par
+
+一般而言,在设计网格的时候结构化网格是有优先度更高的(在要求计算精确度的前提下),而非结构化网格的更适用于对计算精度要求相对不太高的区域,此时用非结构化网格也能比较方便地调整全区域的网格密度;
+
+
+\section{网格编写结构}
+
+
+\section{其他功能}
+主要参考使用手册(\href{http://www.gmsh.info/}{官网}与\href{http://www.gmsh.info/doc/texinfo/gmsh.pdf}{使用手册}不太稳定,有时需要科学上网),此处留一下\href{https://pan.baidu.com/s/1hVDkBt3uSOtySKSuZL6QDg?pwd=510u}{user guide的网盘备份}.
+
+
+
+
+\section{经验之谈}
+
+\subsection{挤出(Extrude)之同源放缩} \label{DishomoExtrude}
+
+为难自己和老师近半个月的问题;尝试了各种办法,却还是很难得到解决;结论是:这件事在gmsh是几乎没办法解决的一件事;\par
+故事的起因是老师这边需要做一个变半径的圆管(圆管的半径是根据某一函数变化的),因为对圆管内部的各部分解析度有要求,这就限定了圆管截面的网格结构(如下);\\
+
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.25]{Round_Mesh.png}
+\end{figure}
+\noindent
+下面先来谈一谈失败的几种方法;\\
+1.这个结构比较特殊,一个圆面其实是由若干个面组成的,所以若想要进行挤出,就需要随时根据函数调整挤出方向,但是因为不能放缩,且挤出反向难以确定,否掉这一种方案;\\
+2. gmsh的挤出只有4种命令,可以规定平移,旋转,边界层,但是对按函数比例放缩却有所限制,否决;\\
+3.可以通过旋转来挤出这样的网格,不过必须注意,通过旋转的得到的网格为四面体网格,而且外部轮廓为Spline,与实际可能有一定差别,不符合要求,否决;特别注意，\textcolor{red}{gmsh不支持函数化的曲线输入};\\
+4.通过gmsh的循环命令,先指定下一层的点标签,再逐层挤出(Extrude),但gmsh对循环有一定限制,失败;\\
+5.更换软件;gmsh支持使用其他软件进行CAD建模(几何图形),再回到gmsh生成网格,具体格式为(geo/iges/step/brep),因为不同软件对挤出并放缩的支持度不尽相同,且换大型软件学习时间成本过高,否决;\\
+6.利用Nektar++的3DH1D(Quasi-3d)对网格进行变换也是一个思路,但是并没有这样的功能;\\
+7.利用Nektar++的XML文件书写对坐标进行变换:可行,但是对于各点,只能以原点作为中心进行放缩,不支持随时更换原点位置,失败;值得一提的是\textcolor{red}{Nektar++里可以对各点进行拉伸(scale)和平移(translate)操作,变换的值也可以用函数进行表示,但是里边的参数必须事先有定义(可以参考user-guide)}.\\
+8.可以考虑利用gmsh的Python-API对msh格式的网格中的点逐个进行操作,但是如果这样,必须要对msh的文件存储形式足够熟悉才相对方便(格式可参考gmsh文档);\par
+
+从而,最后一种比较可行的办法(老师想出来的)，可以先挤出生成直圆管,然后对用Python对xml文件中的点坐标进行变换操作;下边放一段Python代码(因为学xml包的操作也比较麻烦,所以直接让GPT-4代劳了,亲测可用);另外,附带一段修改Expansions部分的代码(主要指场和多项式阶数).
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+import xml.etree.ElementTree as ET
+import math
+
+tree = ET.parse('pipeMesh.xml')  # XML文件路径
+root = tree.getroot()
+
+for vertex in root.iter('VERTEX'): # 遍历"VERTEX"
+	for v in vertex.iter('V'):  # 遍历"V"
+		coords = v.text.split() # 获取坐标并分割成列表
+		x, y, z = map(float, coords)  # String2Float
+		scale = 2 + math.cos(z)  # 计算放大倍数
+		x *= scale  # 放大x
+		y *= scale  # 放大y
+		v.text = f'{x} {y} {z}'  # 更新坐标
+
+for exp in root.iter('EXPANSIONS'):
+	for e in exp.findall('E'): # 修改元素属性
+		e.attrib['NUMMODES'] = '5'
+		e.attrib['TYPE'] = 'GLL_LARGRANGE'
+		e.attrib['FIELDS'] = 'u,v,w,p'
+
+tree.write('New_Mesh.xml')  # 将修改后的XML保存为新文件
+\end{lstlisting}
+\par
+
+如果是在服务器上跑Python程序的话,还有额外的注意事项;
+\begin{itemize}
+	\item{因为服务器在挂程序的的时候不允许不通过Slurm系统提交(一旦提交会有记录并有警告,三次同类操作会被封号),所以需要再写一个脚本用于提交Python程序(命令: python xxx.py)}
+	\item{由于以上处理好的数据是单个文件,而且做并行化处理需要对Python程序进行并行化改造,上述python程序实际上是单任务单CPU完成的;所以写提交用的脚本时要注意参数;另外,需要注意,Python模块需要额外加载环境;}
+\end{itemize}
+\par
+以上代码对NekMesh处理过的xml进行操作,实现不等比例变换;将圆管变换前后的网格对比:\\
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.2]{2COSZ.png}
+	\quad
+	\includegraphics[scale=0.25]{Straight.png}
+	\caption{变化前后的圆管(素体)}
+\end{figure}
+
+\subsection{内点与单元}
+起因在于因为长期使用Paraview造成的一点小乌龙;这里主要是再重申一下概念;对有限元不够了解可以找本有限元的书翻一下前边的概念和基本原理;\par
+
+首先,直观来说,用Gmsh进行网格绘制,\textcolor{red}{其最小的网格单元即为有限元},例如三角形,四边形(2维),四面体,五面体(四六过渡),六面体(3维);以二维的一个正方形区域来说:
+\begin{lstlisting}[numbers=left,frame=single]
+point(1) = {0, 0, 0, 1};
+point(1) = {0, 1, 0, 1};
+point(1) = {-1, 1, 0, 1};
+point(1) = {-1, 0, 0, 1};
+
+Line(1) = {1, 2};
+Line(1) = {2, 3};
+Line(1) = {3, 4};
+Line(1) = {4, 1};
+
+Curve Loop(1) = {1, 2, 3, 4};
+Surface(1) = {1};
+
+Transfinite curve{1} = 5 using Progression 1.0;
+\end{lstlisting}
+\par
+以上网格会均匀生成16个正方形,其中的\textcolor{red}{每个小正方形}都是一个\textcolor{red}{有限元};在Nek Mesh生成的xml格式网格文件的最下方,会有<EXPANSION>条目,其中的NUMMODES为插值多项式阶数;\par
+Nektar++的多项式插值是\textcolor{red}{针对有限元}来说的;例如,在1/16的正方形内,用4阶多项式进行插值,在这个小正方形的各条边都会出现中间的2个Gauss-Labatto点,对应连接后将1/16的小正方形分成$3\times 3 = 9$份,此时的各点称为\textcolor{red}{内点};有限元的"元"也可称\textcolor{red}{(有限元)单元}.\par
+如果是六面体网格,可以通过:有限元单元数$\times$(多项式阶数-1)$^3$+单元顶点个数,估算整个网格的内点规模;
+
+
+\subsection{边界层与网格密度}
+在设计有实体壁面的网格时尤其要注意,需要事先对贴体网格的壁面尺寸有一个估计;具体而言就是根据边界层的$y+$尺寸估计第一层的网格大小;\par
+
+关于壁面函数与$y+$,其主题内容可参考\href{https://zhuanlan.zhihu.com/p/584913137}{专栏};$y+$表示壁面处的无量纲距离,计算公式为$y+=\frac{y\sqrt{\tau_\omega/\rho}}{\nu}$,u是边界层无量纲速度,y是无量纲尺寸,$\nu$是运动学粘度;\par
+
+实际应用中,可以利用网上的计算器先估算一下$y+$,计算器网站\href{https://www.cfd-online.com/Tools/yplus.php#opennewwidow}{传送门};\par
+
+关于$y+$的范围,主要依据$y+$的取值范围将边界层分为3层,分别是:粘性底层(0<$y+$<5),缓冲层(5<y+<30),完全湍流层(y+>30);网格第一层尺寸(此处应考虑多项式阶数)其实选择在15$y+$或者30$y+$以上均可,不要过小;
+
+
+

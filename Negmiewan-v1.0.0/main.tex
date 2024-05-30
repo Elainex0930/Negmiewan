@@ -1,0 +1,101 @@
+\documentclass[10pt]{book}
+\usepackage{graphicx}
+\usepackage{ctex}
+\usepackage{eso-pic}
+\usepackage{transparent}
+\usepackage{titletoc}
+\usepackage{titlesec}
+\usepackage{ctexcap}
+\usepackage[b5paper,text={125mm,195mm},centering,left=0.9in,right=0.9in,top=0.9in,bottom=0.9in]{geometry}
+\usepackage[]{geometry}
+\usepackage{imakeidx}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{appendix}
+\usepackage{indentfirst}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{fontspec}
+\usepackage{hyperref}
+%\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{ntheorem}
+\usepackage{fancyhdr}
+\usepackage{cases}
+\usepackage{emptypage}
+\usepackage{midpage}
+\usepackage{subfigure}
+\usepackage{xeCJK}
+
+%\setCJKfamilyfont{chopin}{C:/Windows/fonts/CHOPINSCRIPT.OTF}
+%\newcommand{\chop}{\CJKfamily{chopin}}
+
+\graphicspath{{pic/}}
+
+% Title
+\title{\textcolor{red}{CFD软件使用指北} \\ \small {Nektar++ \& Gmsh etc.入门}}
+\author{\href{https://github.com/Erllane?tab=projects}{\Large{$\mathfrak{Erllane}$}}}
+\date{\today}
+\newtheorem{example}{}            
+\newtheorem{algo}{算法}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{definition}{定义}[section]
+\newtheorem{axiom}{公理}
+\newtheorem{prope}{性质}[section]
+\newtheorem{propo}{命题}[section]
+\newtheorem{lemma}{引理}[section]
+\newtheorem{coro}{推论}[section]
+\newtheorem{remark}{注:}
+\newtheorem*{proof}{证明}
+\newtheorem{condition}{}
+\newtheorem{conclusion}{结论}
+\newtheorem{assumption}{假设}
+\pagestyle{plain}
+\hypersetup{colorlinks=true,linkcolor=black}
+\setlength{\parindent}{2em}
+\includeonly{Chpt1,Chpt2,Chpt3,Chpt4,Chpt5,Chpt6,Chpt7}
+
+
+\setcounter{secnumdepth}{6}
+\setcounter{tocdepth}{6}
+
+
+\makeatletter
+\renewcommand\tableofcontents{%
+	\pagestyle{empty}
+	\section*{\contentsname
+		\@mkboth{%
+			\MakeUppercase\contentsname}{\MakeUppercase\contentsname}}%
+	\@starttoc{toc}%
+	\newpage
+	\pagestyle{plain}% 
+}
+\makeatother
+
+\graphicspath{{pic/}}
+
+\begin{document}
+	\maketitle
+	
+	\newpage
+	\thispagestyle{empty}
+	\begin{midpage}
+		\begin{center}
+	\Large{$\mathfrak{cogito \; ergo \; sum}$}	
+		\end{center}
+	\end{midpage}
+
+	\newpage
+	\tableofcontents
+	\thispagestyle{empty}
+	\include{Chpt1}
+	\include{Chpt2}
+	\include{Chpt3}
+	\include{Chpt4}
+	\include{Chpt5}
+	\include{Chpt6}
+	\include{Chpt7}
+\end{document}
+

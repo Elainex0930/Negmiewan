@@ -1,0 +1,901 @@
+\chapter{Nektar++使用指南}
+本章及后续若不加说明,均在Linux环境下进行,考虑到Ubuntu版本太高时安装相对稍旧版本的Nektar++时会有系统版本导致的报错,所以建议安装轻量级的VirtualBox虚拟机以及Ubuntu 16(感谢某磨豆腐大佬的\href{https://pan.baidu.com/s/1myh95ppKbdD39LbbPHqViA?pwd=1024}{资源});\par
+
+VirtualBox和虚拟机的安装从略，VirtualBox中安装虚拟机的方法参考\href{https://mp.weixin.qq.com/s/_EpV4nraUeiVdLHgsxxBFg}{磨豆腐大佬公众号里此篇文章}.
+此外,建议在搭建好虚拟机环境后,在虚拟机上挂载一个Windows共享文件夹,会相对方便些,此处从略.可参考\href{https://zhuanlan.zhihu.com/p/389629976?utm_source=wechat_session&utm_medium=social&s_r=0}{这篇文章};\par
+
+此外,在进行软件安装前,建议先在目录下建一个软件安装的公共文件夹,用来存放和安装软件,后期易于管理;\par
+
+软件官网:\url{https://www.nektar.info/};\par
+资源下载:\url{https://www.nektar.info/src/};
+
+
+\section{软件介绍}
+其实\href{https://www.nektar.info/src/user-guide-5.0.1.pdf}{user guide}的introdution部分也有,不过貌似这种介绍可能不太会有人专门去了解(除非一时兴起);\par
+
+简要介绍一下软件历史(详细可参考\href{https://www.nektar.info/src/developer-guide-5.0.1.pdf}{developer guide}的introdution部分).\par
+Nektar++是由伦敦帝国理工学院(Imperial College London)和美国犹他大学(University of Utah)合作开发的软件.\par
+Nektar++这款软件是一款基于\textcolor{red}{Spectral/hp(谱元法)}的高精度\textcolor{red}{有限元}计算工具,其最早可以追溯到上世纪的Nektar程序(即Nektar++的前身);后来,随着时代的发展,基于C++语言的结构与优秀的运行速度,Nektar++转向使用C++进行程序底层代码编写;如今的Nektar++软件底层主要由C++语言和FORTRAN语言编写而成,同时支持使用Python接口.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{软件安装}
+下载以上资源下载部分的\href{https://www.nektar.info/src/}{安装包},然后在虚拟机上进行安装;建议先从5.0.1版本开始使用(5.2.x及以后版本的脚本书写在某些地方有所变化,比如显隐式格式选择的控制,小版本之间的差异应该不大,具体可以参看更新日志);
+\par
+接下来是具体的安装步骤,可以参考user-guide里第一章的安装指南(也可参考磨豆腐大佬公众号的文章):\par
+编译过程从user-guide的1.3.2.2节开始;首先,解压下载好的源码压缩包,然后执行命令:\par
+\begin{lstlisting}[frame=single]
+mkdir -p build && cd build
+ccmake ../
+\end{lstlisting}
+以上的ccmake命令是基于cmake库进行的,所以要在运行以上命令之前,先在本地电脑安装cmake;还有一些其他Ubuntu(Linux)系统未进行预装的库,以下一并进行安装:
+\par
+\begin{lstlisting}[frame=single]
+sudo apt-get install libboost-dev flex mpich libghc-zlib-dev
+sudo apt-get install libarpack++2-dev cmake-curse-gui
+\end{lstlisting}
+\par
+(因为一行写不开就分成两行了(坏),以上安装的各组件的功能详见第\ref{surportoo}章支持库食用指南)\par
+执行过ccmake命令后,按c进行编译确认;之后会进入一个截面确认安装选项,可参考guide文档上,把recommend的安装选项全部改为ON,其他的默认不做改动即可;下边简单列一下需要重点确认的选项:\par
+\begin{itemize}
+	\item{必要:}
+	\item{[1]NEKTAR\_USE\_FFTW                  ON}
+	\item{[2]NEKTAR\_USE\_MPI                   ON}
+	\item{[3]NEKTAR\_USE\_SCOTCH                ON}
+	\item{[4]NEKTAR\_USE\_SYSTEM\_BLAS\_LAPACK  ON}
+	\item{[5]THIRDPARTY\_BUILD\_BOOST           ON}
+	\item{[6]THIRDPARTY\_BUILD\_SCOTCH          ON}
+	\item{[7]THIRDPARTY\_BUILD\_FFTW            ON}
+	\item{可选:}
+	\item{[8]THIRDPARTY\_BUILD\_TINYXML         ON}
+	\item{[9]NEKTAR\_USE\_HDF5                  ON}
+\end{itemize}
+\par
+确认好之后依下方提示按c进行编译,可能会重复1到2次,直到下方出现[g] to generate的提示,按g进行生成,生成结束后会返回控制台;在控制台输入以下命令进行安装:\par
+\begin{lstlisting}[frame=single]
+	make install
+\end{lstlisting}
+\par
+软件安装一般可能要半小时到一小时不等,甚至还会长一些,等软件安装结束,控制台会回到可操作状态;当然,也可以尝试多线程并行安装(以4线程为例):
+\begin{lstlisting}[frame=single]
+	make -j4 install
+\end{lstlisting}
+\par
+
+另外还有一点,就是在安装过程中需要联网下载第三方包,需要虚拟机能够联网;如果不能联网,则需要在\href{https://www.nektar.info/thirdparty/}{第三方库}这里预先下载压缩包,并把压缩包放到解压后的Nektar++/Thirdparty目录下,再运行make install命令;\par
+在服务器上安装同理;
+
+\section{程序使用}
+
+首先呢,这个软件是没有GUI界面的,需要用编译好的可执行文件加命令行执行代码;因为目前组里在做的都是不稳定不可压缩Navier-Stokes方程的相关问题,所以下边主要介绍NekMesh,IncNavierStokessolver和FieldConvert几个程序的具体的常用使用方法(其他功能详细参考使用手册).\par
+
+关于这几个程序的路径嘛,分别在\$Nektar++\$/build/Utilities/NekMesh,\$Nekta r++\$/build/Utilities/FieldConvert和\$Nektar++\$/build/solvers/IncNavierStokesso lver三个目录下,建议先从该路径下创建一个快捷方式,再将其拷贝到Home目录备用,随使用处复制;或者,也不用这样,本地其实没有多大必要写脚本再bash,有些太麻烦了;\par
+
+\textcolor{red}{user guide食用指南}:找到关键词,在pdf文档里ctrl+F直接搜索.\par
+
+为快速上手使用,简单介绍一下程序使用流程是必要的;\par
+
+\textcolor{green}{第一步},用Gmsh画好网格(geo文件,几何信息),然后用Gmsh的GUI或者命令行gmsh的生成网格命令,生成.msh格式的网格;\par
+\textcolor{green}{第二步},利用NekMesh将.msh文件转换为Nektar++的Solver程序可读的.xml格式的网格信息文件,并修改EXPANSION部分的参数(如有必要,此步对顶点进行操作);\par
+\textcolor{green}{第三步},编写程序部分的xml脚本,记述信息同下第\ref{xmlprog}节程序部分;\par
+\textcolor{green}{第四步},将求解器(或其快捷方式)、xml网格信息脚本、xml程序脚本置于同一目录下，运行求解器；\par
+\textcolor{green}{第五步},用FieldConvert处理结果chk/fld格式的流场数据;一般是得到可视化的.vtu格式的流场文件,用Paraview打开渲染可视化(当然,也有其他备选项);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{NekMesh}
+
+\subsubsection{msh到xml的生成}
+主要指xml网格的生成;其实这样说可能会造成一些误会,因为xml文件并不是网格文件;不过此处生成的xml文件是Nektar++可识别的网格信息的文件,关于其构成,在下一个section会讲到.\par
+NekMesh的主要使用方法,(对于gmsh生成的.msh格式网格)在命令行执行以下命令(确保NekMesh可执行文件的快捷方式在该目录下):
+
+\begin{lstlisting}[frame=single]
+	./NekMesh xxx.msh xxx.xml
+\end{lstlisting}
+\par
+
+这时因为安装了TinyXML,打开看到网格的信息,会发现无法肉眼读取数据;若想看到网格数据,或对数据有直接操作,作为代替运行以下命令即可:
+\begin{lstlisting}[frame=single]
+	./NekMesh xxx.msh xxx.xml:xml:uncompress
+\end{lstlisting}
+\par
+以下主要讲NekMesh的主要用法,网格XML文件的详细信息在下一节会详细展开;\par
+
+首先,在生成XML网格信息文件之后,对文件信息有其他处理的情况,若需要可视化,需用到FieldConvert(在下面FieldConvert的开始部分会提到);
+
+\subsubsection{NekMesh功能概览}
+先来讲一下NekMesh的命令结构;\par
+NekMesh事实上把不同功能拆分成了单独的程序,进行了模块化,互不干扰,而NekMesh是一众程序的一个结合体;在执行基础命令(包含输入/输出)的同时,输入对应模块化的功能命令,就可以一次执行多个功能,详情参照user guide的4.4节;具体的输入和输出格式限制也请参照user guide的4.4节;\par
+下文没提到不代表没有该功能;日常有可能用到的(可能性大于零就行/逃)都列在下面了;其他功能请详细参考user guide.下文没有提到的圆滑化处理(Spherigon patches),基于变分法的网格修正(Variational Optimisation)也可以看下;\par
+
+另外,如果在安装编译时开了MESHGEN,可以直接用NekMesh生成网格(见user guide4.5节,不推荐).
+
+\subsubsection{msh升阶魔法(雾)}
+先说结论:一般而言,不太能用到;\par
+主要是指NekMesh对msh网格文件的升阶操作;Gmsh本身也支持生成高阶网格(直观上讲,顶点和有限元密度会增大,阶数主要指生成算法的阶数),但是Gmsh本身最多只能支持到三阶,例如以下命令:\par
+\begin{lstlisting}[frame=single]
+	gmsh -3 pipe.geo -order 3
+\end{lstlisting}
+\par
+但是,NekMesh甚至可以生成更高阶的网格,例如在Gmsh阶段不升阶,然后再执行以下命令可升至7阶:\par
+\begin{lstlisting}[frame=single]
+	NekMesh pipe.msh newpipe.msh:msh:order=7
+\end{lstlisting}
+\par
+
+一般而要,算程序的话,网格文件太大会有很多麻烦,所以一般是用Expansion里的插值多项式阶数控制计算密度,这个只作为了解;
+
+此外,Nekmesh还提供了对生成好的圆柱体的xml网格信息的壁面部分进行高阶光滑化处理的功能:
+\begin{lstlisting}[frame=single]
+NekMesh -m cyl:surf=2:r=1.0:N=5 LinearCylinder.xml 
+				         HighOrderCylinder.xml
+\end{lstlisting}
+\par
+以上代码就是将Linear网格变成半径为1的5阶壁面网格的HighOrder网格;其中"surf=2"的2指的是geo文件中赋予的Physical Surface的物理面指标;\par
+所谓的壁面5阶网格就是将圆柱的圆形部分换成5阶多项式插值(一般两个网格点都是直线,也就是两点间用线性插值),至于壁面上两点之间会用几段线段相连,如果对原低阶网格在xml额外信息中设置相同阶数,可以发现两个版本位置十分接近但不相同(相对位置一致但后者是在直线上完成的);但是这个功能比较有局限性,它无法对非三棱柱的面元进行变换,o型网格拼接而成的四棱柱的边界面也不在使用范围之内;
+
+\subsubsection{面元抽取} \label{ExtractFace}
+这个模块主要的功能是从现有的xml文件中抽取Expansion中对应标签的平面上的信息,组成一个新的xml文件;\par
+这个功能设计的本意应该是抽取面元,然后在FieldConvert中使用该部分,之抽取流场的部分信息;这个功能可能有一点鸡肋;因为它只能抽取现有面元的信息,而且xml中的面元往往是整个几何形体的边界(geo文件内部中内部的面一般不会出现在Composite里,和physical有关,可动手试一下);\par
+\begin{lstlisting}[frame=single]
+ <C ID="41"> E[8627,8629,8631,8633,8635] </C>
+\end{lstlisting}
+\par
+若xml文件中EXPANSION部分如上定义,命令可以如下:
+\begin{lstlisting}[frame=single]
+NekMesh -m extract:surf=41 Mesh.xml Mesh_41.xml
+\end{lstlisting}
+\par
+不过更实用的是在FieldConvert里直接生成切片进行提取就是了;
+
+\subsubsection{边界层生成}
+\textcolor{red}{偷懒达咩!}\par
+可以用xml中COMPOSITE部分的(物理)面信息生成一个粗浅的边界层(用几何级数工作,对应于gmsh的Progression,但是NekMesh无法实现Bump);
+\begin{lstlisting}[frame=single]
+NekMesh -m bl:surf=41:layers=3:r=1.2:nq=8 Mesh.xml M3L.xml
+\end{lstlisting}
+\par
+平面沿用上例,这样的代码生成了面41的边界层;"边界层"为3层,每层内点按照1.2的步长增长比例递增,共8个积分点(7小层); M3L.xml为生成后的整体网格的文件;
+
+\subsubsection{边界识别}
+聊胜于无的功能;曾经测试过,有一些网格这个程序识别不了;命令如下
+\begin{lstlisting}[frame=single]
+NekMesh -m detect volume.xml VWithBoundaryComposite.xml
+\end{lstlisting}
+\par
+
+\subsubsection{平面挤出(拉伸)}
+将2维网格挤出至3维;功能上只是能够实现,但是在泛用性上不如用Gmsh(不支持旋转/沿导线挤出);
+\begin{lstlisting}[frame=single]
+NekMesh -m extrude:layers=n:length=l 2D.xml 3D.xml
+\end{lstlisting}
+\par
+上述命令是把2D网格分n层挤出(或称为拉伸)至三维,挤出长度为1,输出为3D.xml.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{IncNavierStokessolver} \label{INSS}
+主要格式是速度修正格式(VCS,Velocity Correction Scheme),具体的格式内容在这里就不讲了,这里只讲使用;\par
+下面列一下user guide中需要额外看一下的小章节:11.1.1.6/11.1.3
+
+\subsubsection{基本用法}
+以下是几种主要用法;第一行情况是xml文件包含了程序运行选项和网格;第二行命令则是分开的情况;第三种是并行运行求解器(8线程4节点-服务器);第四种是3DH1D(Quasi-3d)情况对应展向有指定Fourier并行数的情况;
+\begin{lstlisting}[frame=single]
+IncNavierStokesSolver session.xml
+IncNavierStokesSolver Prog.xml Mesh.xml
+mpirun -n 8 -N 4 IncNavierStokesSolver Prog.xml Mesh.xml
+mpirun -n 8 -N 4 IncNavierStokesSolver --npz 2 
+				       Prog.xml Mesh.xml
+\end{lstlisting}
+\par
+
+\subsubsection{求解器信息}
+\begin{itemize}
+\item{\textcolor{red}{\textbf{展开(Expansion)}}}
+\end{itemize}
+\par
+主要有三种形式;\par
+其中Modified比较常用;GLL\_LARGERANGE用的是在Gauss-Labatto点进行Largrange插值;具体如下:
+\begin{table}[h]
+	\centering
+\begin{tabular}{c|l}
+	\hline 
+	BASIS  	 	 & TYPE              \\ 
+	\hline
+	Modal		 & MODIFIED    \\ 
+
+	Nodal		 & GLL\_LARGERANGE \\ 
+
+	Nodal SEM	 & GLL\_LARGERANGE SEM  \\ 	
+	\hline 
+\end{tabular} 
+\end{table}
+
+
+
+\par
+\begin{itemize}
+	\item{\textcolor{red}{\textbf{方程形式(EqType)}}}
+\end{itemize}
+一般都是不稳定N-S方程,EqType是"UnsteadyNavierStokes";其他方程形式请参考手册;\par
+
+\begin{itemize}
+	\item{\textcolor{red}{\textbf{求解格式(SolverType)}}}
+\end{itemize}
+一共有3种,一般用VCS(速度修正格式);其他两种为弱压的VCS和直接模拟(DNS法),都支持2D/Quasi-3D/3D及Continuous Projection;详细信息见11.3.1节,下同;\par
+
+\begin{itemize}
+	\item{\textcolor{red}{\textbf{驱动程序(Driver)}}}
+\end{itemize}
+一般为标准(Standard,时间迭代).另一种是\textbf{SteadyState},稳态求解适用;还有Adaptive(自适应多项式阶数,没用过,参数设置具体参照11.7节);\par
+
+\begin{itemize}
+	\item{\textcolor{red}{\textbf{投影(Projection)}}}
+\end{itemize}
+一般用连续伽辽金投影(Continuous Garlerkin,简称CG);另外还有离散、混合两种;\par
+
+\begin{itemize}
+	\item{\textcolor{red}{\textbf{时间推进格式(TimeIntegrationMethod)}}}
+\end{itemize}
+有若干种(3大类);IMEX是显隐结合的时间推进格式(1/2/3阶,一般用3阶);Backward Euler为向后Euler法(1阶),为隐式方法;BDF为多步法(向后微分方程,1/2阶);其中,只有后两种纯隐式方法支持用离散Garlerkin投影;\par
+另外,时间推进格式部分脚本在5.2.0版本前后有所变化,before 5.2.0-like:
+\begin{lstlisting}[frame=single]
+<I PROPERTY="TimeIntegrationMethod" VALUE="IMEXOrder3"/>
+\end{lstlisting}
+\par
+而在5.2.0版本之后,写法变成了:\par
+\begin{lstlisting}[frame=single]
+<TIMEINTEGRATIONSCHEME>
+  <METHOD> IMEX </METHOD>
+  <ORDER> 3 </ORDER>
+</TIMEINTEGRATIONSCHEME>
+\end{lstlisting}
+\par
+
+未提到的可能有一点点可能用到的参数:Extrapolation(CG-DG混合时使用,用于设置子步,默认Standard), SubStepIntScheme(DG子步),DEALIASING(激活Quasi-3D的3/2 padding准则,具体机制不是很清楚,是算对流项时候用的);
+
+\subsubsection{参数信息}
+略,详见XML文件说明第\ref{xmlprog}节条件设定部分;
+
+\subsubsection{对流扩散方程-热耦合}
+Nektar++支持在解N-S方程的同时求解一个对流扩散方程(对应于N-S方程的热力项需要用对流扩散方程实时更新);\par
+需要在EXPANSION处开始定义扩散率场("u,v,c1,c2,p",以下均需要据此进行改动);然后在函数部分定义一个新函数:
+\begin{lstlisting}[frame=single]
+<FUNCTION NAME="DiffusionCoefficient">
+ <E VAR="c1" VALUE="0.1" />
+ <E VAR="c2" VALUE="0.01" />
+</FUNCTION>
+\end{lstlisting}
+\par
+此处的c1,c2对应于对流扩散方程章节的对流扩散方程中的"$\epsilon$".
+
+
+\subsubsection{施加恒定流量}
+即控制每个截面的流量(通量)相同,原理是对速度进行线性修正,在周期性边界条件的时候经常用到;需要在Parameter部分设置流量值(Flowrate),然后在边界条件中加上Flowrate设定:
+\begin{lstlisting}[frame=single]
+<P VAR="u" VALUE="[1]" USERDEFINEDTYPE="Flowrate" />
+\end{lstlisting}
+\par
+最后再定义Flowrate函数(函数同第\ref{xmlfilter}节上方的Flowrate函数;\par
+
+
+
+\subsubsection{额外信息}
+目前不支持磁场力,如有MHD使用需求请移步Github(MHD),按照原软件方式安装即可(需要改动Cmakefile,具体细节从略);\par
+移动体(Moving Body)的相关问题请参照user guide;\par
+滤波器(Filter)的动能与熵部分(Kinetic energy and enstrophy)和Reynold Stress部分请参照user guide第三章(3.4.10/15);\par
+稳定性分析还没做过,有待开发;
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{FieldConvert} \label{FieldConvert}
+FieldConvert处理的主要是和场相关的问题;其程序架构与NekMesh类似,也是多个程序的一个运行接口;\par
+\textcolor{red}{\textbf{特别提示:为节约空间,一下./FieldConvert可能会简写为FC,运行程序时不要这样写.}}
+
+\subsubsection{XML网格可视化处理}
+首先,对于一个XML网格信息文件,有时会受制于操作,需要将其可视化;这就需要FieldConvert进行处理(如下)
+\begin{lstlisting}[frame=single]
+	./FieldConvert xxx.xml xxx.vtu
+\end{lstlisting}
+\par
+其中,".vtu"是非结构化网格的可视化文件格式(格式类型为VTK类型文件,最后一个字母用于区分网格是否为结构化网格);可利用Paraview打开进行查看(如3.5.1节的网格模型就是Paraview视图下的网格轮廓素体).
+
+\subsubsection{chk/fld流场可视化处理}
+
+一般而言,通过以上INSS跑出来的流场一般是chk或者fld格式的文件(并行的时候chk文件夹下的各个流场文件都是fld类型的);而在此步骤,需要将该流场信息转化为可以可视化的形式;\par
+其中一种途径是转化为vtu文件,具体的命令如下例(以及mpi版本):
+\begin{lstlisting}[frame=single]
+	./FieldConvert field.fld field.vtu
+	mpirun -n 128 -N 4 ./FieldConvert f.fld fa.vtu
+\end{lstlisting}
+\par
+
+其中mpi以4节点总计128任务为例(一般本地虚拟机$n \leq 8$,不设置N参数);然后可用paraview打开;\textcolor{red}{注:mpi生成的vtu文件形式是一个多任务的文件夹和一个.pvtu的文件,在用Paraview打开时打开.pvtu文件即可}.详细方式请参照第\ref{Parabasis}节Paraview的基本使用步骤;\par
+
+此外,也可以生成Tecplot制式的dat文件,可用Tecplot打开,也可用Paraview打开(生成方法类似,不过dat文件生成只能单线程,不能用并行进行生成);相对地,Tecplot对vtu文件的查看不如Paraview友好;
+
+
+\subsubsection{区域提取}
+在一个流场中,只输出某一区域的可视化信息;但是,受制于网格形状,\textcolor{red}{边界可能以cell的形式出现(尤其是不规则网格)};如下便是$0\leq x \leq 1$,$2\leq y \leq 3$,$4\leq z \leq 5$的正方形区域的输出命令;
+
+\begin{lstlisting}[frame=single]
+	./FieldConvert -r 0,1,2,3,4,5 f.fld part.vtu
+\end{lstlisting}
+\par
+其实这个功能输出的是网格单元;
+
+\textcolor{red}{提取边界区域}:\par
+在\ref{ExtractFace}节有提到提取边界区域的问题,以下命令就是针对那时的想法构筑的命令;\par
+\begin{lstlisting}[frame=single]
+FC -m extract:bnd=41 Mesh.xml field.fld bound_41.fld
+NekMesh -m extract:surf=41 Mesh.xml Mesh_41.xml
+FC Mesh_41.xml bound_41.fld bound_41.dat
+\end{lstlisting}
+
+\textcolor{red}{提取Quasi-3d情况的单个非展开方向截面}:\par
+\begin{lstlisting}[frame=single]
+FieldConvert -m homplane:planeid=[value] file.xml 
+				     file.fld file-plane.fld
+\end{lstlisting}
+\par
+其中value为提取的面的ID编号;
+
+
+\subsubsection{流场的加减}
+这个功能在检测查看加扰动之后的脉动情况的时候有时会用到,特别是当流场的同一速度场速度尺度差异过大的时候(加噪声流场减基本流);一般而言格式如下(例为以上情况):\par
+
+\begin{lstlisting}[frame=single]
+FC -m addfld:fromfld=base.fld:scale=-1 mesh.xml
+					 noise.fld pure.fld
+\end{lstlisting}
+两个流场合并取平均"-m combineAVG:fromfld=..."(模式相同)
+
+
+\subsubsection{流场的梯度}
+求解各个场的梯度场;\par
+\begin{lstlisting}[frame=single]
+FieldConvert -m gradient test.xml test.fld test-grad.fld
+\end{lstlisting}
+
+
+\subsubsection{流场插值(转换)}
+一般的流场插值,先说下一般步骤;首先,对于一个网格Mesh1.xml及其对应的流场Field1.fld,有一个几何形状与Mesh1.xml相同但内部网格划分不同的网格Mesh2.xml,用以下命令生成Mesh2.xml对应的流场:\par
+\begin{lstlisting}[frame=single]
+FC -m interpfield:fromxml=Mesh1.xml:fromfld=
+			   Field1.fld Mesh2.xml Field2.fld
+\end{lstlisting}
+
+Quasi-3d下的Expansion方向插值(更改HomModes),同理;假设原始的3DH1D流场的展向半波数为24,现在要变成48;(之前还以为不行,就重新跑了基本流...很想吐槽,user guide很多相似的功能不是写在一起的,甚至找的时候也比较麻烦)
+\begin{lstlisting}[frame=single]
+FC -m homstretch:factor=1 --output-point-hom-z 48 
+			Mesh2D.xml field24.fld stretch_48.fld
+\end{lstlisting}
+\par
+其中factor=1是指拉伸比例为1(不拉伸),此处也可进行修改(为其他倍数-在其他相应需求下);另外"--output..."参数不是必须参数,此处因为需要指定输出半波数,所以才加了这个参数;
+
+其余若干插值功能请参考user guide第5.5/6.18-20节;其余scale/mean/inner product以及并行问题也请参考user guide;\par
+有一点需要特别注意:\textcolor{red}{FieldConvert有一个计算边界层厚度的功能,那个功能是针对3d情况计算网格某边界附近的棱柱层厚度的,与实际意义上的边界层可能有一些差别;}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{XML文件说明}
+首先,xml文件的结构大致是这样的:
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<NEKTAR>
+	<GEOMETRY>
+	...
+	</GEOMETRY>
+	<EXPANSIONS>
+	...
+	</EXPANSIONS>
+	<CONDITIONS>
+	...
+	</CONDITIONS>
+	...
+</NEKTAR>
+\end{lstlisting}
+\par
+具体的细节请参考Nektar++自带的测试/范例xml文档.此处先讲一个xml语言的小技巧(注释):\par
+对于一段内容若想要节省修改时间,增大可修改性,可以把之前写好的不用的属性注释掉,这样就不会运行注释内的内容;具体的规则是<!-- XX>  XXXXXX </XX-->,同下例:\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<!-- P> Flowrate = 0.05  </P -->
+\end{lstlisting}
+\par
+
+\subsection{网格部分}
+这部分主要记录网格的几何信息(其实也可以和下面程序部分合写到同一个xml文档中);一般而言,通过NekMesh生成的xml网格信息,会包含Geometry和Expansion两大部分,下面展开来讲(可能会用到的信息会有提到,全面的信息请移步user guide第3章):\par
+几何信息这部分主要由7部分组成,但xml几何信息往往只有6部分(没有Curved部分):
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<GEOMETRY DIM="2" SPACE="2">
+	<VERTEX> ... </VERTEX>
+	<EDGE> ... </EDGE>
+	<FACE> ... </FACE>
+	<ELEMENT> ... </ELEMENT>
+	<CURVED> ... </CURVED>
+	<COMPOSITE> ... </COMPOSITE>
+	<DOMAIN> ... </DOMAIN>
+</GEOMETRY>
+\end{lstlisting}
+\par
+其中\textbf{DIM}是有限元展开的维数,\textbf{space}指示有限元维数;下面将对其他部分分开进行讲解;
+
+\subsubsection{几何(Geometry)}
+\begin{itemize}
+	\item{\textcolor{red}{点(Vertice)}}
+\end{itemize}
+
+一个"点"的信息主要由坐标和ID构成;ID为点的编号,坐标指点的三维笛卡尔坐标;格式如下:
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<VERTEX>
+	<V ID="0"> 0.0 0.0 0.0 </V>
+	...
+</VERTEX>
+\end{lstlisting}
+\par
+描述各点的信息应该在<VERTEX>根下,下同(以下省略);\par
+另外,Nektar++的几何信息存储有一个优势:只有点是通过坐标定义的,只要改变点的位置,边的连接关系等其余信息均不会改变;此处的点也可以通过Nektar++自带的功能改写参数实现坐标放缩和移动,也可以通过Python脚本实现(见\ref{DishomoExtrude}节挤出后的放缩操作);\par
+Nektar++自带的功能比较有限,可以考虑用Python脚本自动化;其中,坐标放缩参数为\textbf{XSCALE},\textbf{YSCALE}和\textbf{ZSCALE},可对点的某一轴坐标以"原点"(也就是该轴对应的"0")为中心进行放缩(scale),不过只支持固定比例的放缩,不支持设置x,y,z的变量操作;也可以有参数,但是参数必须有事先定义(Parameter:pre-build);另一个功能是平移(translate),参数配置为\textbf{XMOVE},\textbf{YMOVE}和\textbf{ZMOVE};下面是示例:
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<VERTEX XSCALE="5",ZSCALE="2",XMOVE="-1",YMOVE="0.2">
+	<V ID="0"> 0.0 0.0 0.0 </V>
+	<V ID="1"> 1.0 2.0 0.0 </V>
+</VERTEX>
+\end{lstlisting}
+\par
+
+\begin{itemize}
+	\item{\textcolor{red}{边(Edge)}}
+\end{itemize}
+
+结构同上;一般为:\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<E ID="0"> 0 1 </E>
+\end{lstlisting}
+\par
+
+\begin{itemize}
+	\item{\textcolor{red}{面(Face)}}
+\end{itemize}
+\par
+面一般有两种:三角形(Triangle)和四边形(Quadrilateral);一般就2D网格而言,Gmsh会优先生成四边形网格,如果因为顶点问题无法再继续生成四边形网格才会生成三角形网格;
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<T ID="0"> 0 1 2 </T>
+<Q ID="1"> 3 4 5 6 </Q>
+
+\end{lstlisting}
+\par
+
+
+\begin{itemize}
+	\item{\textcolor{red}{有限元(Element)}}
+\end{itemize}
+\par
+有限元的种类比较丰富:\par
+\noindent
+\begin{tabular}{|c|l|l||c|l|l|}
+	\hline 
+	S & Segment       & 1维:线段分割 & A & Tetrahedron & 3维:四面体形 \\ 
+	\hline 
+	T & Triangle      & 2维:三角形   & P & Pyramid     & 3维:金字塔形(四棱锥)\\ 
+	\hline 
+	Q & Quadrilateral & 2维:四边形   & R & Prism       & 3维:三棱柱\\ 
+	\hline
+	  &               &             & H & Hexahedron  & 3维:六面体\\ 
+	\hline 
+\end{tabular} 
+
+
+
+\begin{itemize}
+	\item{\textcolor{red}{曲线(Curved)}}
+\end{itemize}
+\par
+对已设定曲线进行单独控制,详见user guide.\par
+
+
+
+\begin{itemize} \label{Composite}
+	\item{\textcolor{red}{构成(Composite)}}
+\end{itemize}
+\par
+主要是Gmsh设定中的Physical Curve/Surface/Volume;如下,最前面的ID与Gmsh中设定的各物理线/面/体的标签相同,后方所接的必须是同种类型的"元素"(比如,不能点线混写);这部分在本册\ref{ExtractFace}节NekMesh的面元抽取部分也有提到;\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<C ID="40"> T[0-862] </C>
+<C ID="41"> E[61-67,69,70,72-74] </C>
+\end{lstlisting}
+\par
+
+
+
+\begin{itemize}
+	\item{\textcolor{red}{计算域(Domain)}}
+\end{itemize}
+
+规定展开计算的主要区域(一般会有一个单独的编号);格式:\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<DOMAIN> C[2] </DOMAIN>
+\end{lstlisting}
+\par
+
+\subsubsection{展开(Expansions)}
+
+这部分主要规定上述构成部分的多项式展开形式,主要包含对应组成部分(\textbf{Composite},一般只计算区域),多项式阶数(\textbf{NumModes}),场(\textbf{Fields})以及展开形式(\textbf{Type})四部分(\textcolor{red}{注:为易于理解才区分了大小写,在程序中这些参数名需要大写,Nektar ++对大小写有比较严格的限制,不要随意改动});形式如下:
+\par
+\begin{lstlisting}[frame=single,language=XML]
+   <E COMPOSITE="C[0]" NUMMODES="5" 
+	          FIELDS="u,v,p" TYPE="MODIFIED" />
+\end{lstlisting}
+\par
+以上是比较简要的形式,其中,有几点需要注意:
+\begin{itemize}
+\item{1.对于不同计算区域可以用不同的方法,不过需要在设计网格时就定义好;}
+\item{2.多项式阶数默认为4;每个有限元中间各边的分割"格数"为多项式阶数减一(与插值多项式原理相同);}
+\item{3.场部分定义的"变量"场一定要与后边程序部分定义的一致;一般初始生成只会有"u"这个场,其他场需要自己加上去;除了速度场和压力场,在MHD问题中还会有电势场(Nektar++同样支持);}
+\end{itemize}
+\par
+如果没有改为对应场的话,在运行时,程序会使用默认定义来定义场,而且会在5.0.x版本日志中提醒以下内容(不过一般不影响程序运行):
+\begin{lstlisting}[frame=single,numbers=left]
+Fatal: Level 0 assertion violation
+Use default defination of variable: p
+\end{lstlisting}
+\par
+但是,若在5.2.0及以上版本,程序可能会直接无法运行:
+\begin{lstlisting}[frame=single,numbers=left]
+Fatal: Level 0 assertion violation
+Variable 'p' is missing in FIELDS attribute of EXTENSION tag.
+\end{lstlisting}
+\par
+
+\begin{itemize}
+\item{4.类型一般指插值类型;一般根据求解器的不同,支持性也有一定不同;在常用的IncNavierStokesSolver里,支持Modified,GLL\_Largange,GLL\_Largerange SEM几种,有兴趣可以通过搜索GLL快速找到该位置;Modified一般用的修正过的GLL点插值,低阶数的时候(如4阶),肉眼观察几乎是均匀的.}
+\end{itemize}
+
+当然,也可以展开写:具体而言,对于不同的方向,甚至可以使用不同的基(basis),NUMMODES,TYPE等参数,可选的参数范围也有增加(不过一般不怎么会用到).
+\begin{lstlisting}[frame=single,numbers=left]
+<E COMPOSITE="C[1]"
+   BASISTYPE="Modified_A,Modified_A,Modified_B"
+   NUMMODES="3,3,3"
+   POINTSTYPE="GaussLobattoLegendre,GaussLobattoLegendre,
+   		   		    GaussRadauMAlpha1Beta0"
+   NUMPOINTS="4,4,3"
+   FIELDS="u" />
+\end{lstlisting}
+\par
+如以上部分,在$x$和$y$方向使用了相同的TYPE和插值点(在规定基的时候便做了区分);
+
+
+\subsection{程序部分} \label{xmlprog}
+这部分细项比较多,而且根据求解器不同会有很多差异(比如:特有的一些选项),故此处不详细介绍,会用到的地方已在上一节\ref{INSS}处讲过了;
+
+\subsubsection{条件设定(Conditions)}
+
+\begin{itemize}
+\item{\textcolor{red}{参数(Parameters)}}
+\end{itemize}
+\par
+主要是设定预制(pre-built)参数,格式如下例:
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<P> NumSteps = 1000 </P>
+<P> TimeStep = 0.01 </P>
+<P> IO_CheckSteps = 1000 </P>
+<P> IO_InfoSteps = 200 </P>
+<P> Kinvis = 0.000001 </P>
+\end{lstlisting}
+\par
+其中\textbf{NumSteps}是总步数,\textbf{TimeStep}是时间步长,\textbf{IO\_CheckSteps}是输出流场的步频,\textbf{IO\_InfoSteps}是输出日志的步频;
+
+\begin{itemize}
+	\item{\textcolor{red}{求解器信息(Solver Info)}}
+\end{itemize}
+\par
+确定求解格式的一些相关信息,比如:方程类型(EQTYPE),投影法连续性(Projection),时间推进格式等等;
+\begin{lstlisting}[frame=single,numbers=left]
+<SOLVERINFO>
+  <I PROPERTY="EQTYPE" VALUE="UnsteadyAdvection" />
+  <I PROPERTY="Projection" VALUE="Continuous" />
+  <I PROPERTY="TimeIntegrationMethod" VALUE="
+  				ClassicalRungeKutta4" />
+</SOLVERINFO>
+
+\end{lstlisting}
+\par
+格局求解器的不同这部分也会有差异(比如方程类型,只针对求解器,不同求解器的eqtype完全不同,具体参数的设置方法会在user guide对应求解器的章节有专门的表格列出可选类型;其他参数同理);
+
+\begin{itemize}
+	\item{\textcolor{red}{流程驱动(Driver)}}
+\end{itemize}
+基于以上求解器信息,进一步规定的求解流程,默认是标准(\textbf{Standard});这部分主要与稳定性分析有关(ModifiedArnoldi, Arpack),有兴趣可自行了解(user guide 3.3.2.1);
+
+\begin{itemize}
+	\item{\textcolor{red}{变量(Varieables)}}
+\end{itemize}
+规定了计算中涉及到的场的信息;场可以是速度场,压力场,电势场等;此处的变量(Variables)代表对应的场(对应于EXPANSION部分的FIELDS);其中,速度场一般规定数量等于计算问题的空间维数,比如三维问题规定"$u$($x$),$v$($y$),$w$($z$)"三个变量,而二维问题规定"$u$($x$),$v$($y$)"两个;格式为:
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<VARIABLES>
+  <V ID="0"> u </V>
+  <V ID="1"> v </V>
+</VARIABLES>
+\end{lstlisting}
+\par
+
+\begin{itemize}
+	\item{\textcolor{red}{边界区域与边界条件(Boundary Regions and Conditions)}}
+\end{itemize}
+\par
+设定边界这里比较麻烦;必须先定义边界区域才能在下边给出边界条件;为直观了解各部分结构,先给出一个边界区域的例子(下例中的C[?]内部的编号见本册第\ref{Composite}节对应部分):
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<BOUNDARYREGIONS>
+  <B ID="4"> C[41] </B>
+  <B ID="5"> C[42] </B>
+</BOUNDARYREGIONS>
+\end{lstlisting}
+\par
+其中"41","42"是画网格时设计好的Physical区域(若忘记,请参考网格的geo文件);"0","1"是定义的边界\textcolor{red}{区域}(不是"类型"!每个"Composite"应对应不同"Region"(即便它们的边界条件完全相同),下方的边界条件处与Region的ID对应;可以理解为,\textcolor{red}{Region ID是边界标签的一次信息中转,是xml到solver的一个信息接口});于是,可以在下方继续定义边界条件:\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<BOUNDARYCONDITIONS>
+  <REGION REF="4">
+    <D VAR="u" VALUE="sin(PI*x)*cos(PI*y)" />
+    <D VAR="v" USERDEFINEDTYPE="TimeDependent"
+    		VALUE="sin(PI*x)+0.05*sqrt(t)*awgn(1)" />
+    <N VAR="p" USERDEFINEDTYPE="H" VALUE="0" >
+  </REGION>
+</BOUNDARYCONDITIONS>
+\end{lstlisting}
+\par
+上边是一个随便写的边界条件,对应于原始定义的"41"面/线(本册中上文给出的信息为"41"面);其中$x$、$y$两个方向的速度均为Dirichilet型边界，其值用以上函数表示；“y”轴方向边界速度为一个时间相关的函数，awgn(1)生成一个方差为1的Gauss白噪声; p的设置为速度修正格式(VCS)自然边界;具体的边界问题在本册\ref{BoundaryOther}节部分会讲到;
+
+边界条件的类型分为3大类,其中根据加载条件和时间依赖性等(类型)又细分为很多小类,甚至有一部分边界类型(UserDefinedType)和求解器有关;以下主要讲解边界的"大类";\par
+
+第一种是Dirichilet(狄利克雷)边界条件,又称为本质(essential)边界条件(第一类边界条件);在文档中用<D>来标识,同下:(依次是齐次/非齐次/时间相关边界)\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<!-- homogeneous condition -->
+<D VAR="u" VALUE="0" />
+<!-- inhomogeneous condition -->
+<D VAR="u" VALUE="x^2+y^2+z^2" />
+<!-- time-dependent condition -->
+<D VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="x+t" />
+
+\end{lstlisting}
+\par
+
+第二种是Neumann/von Neumann(诺伊曼)边界条件,又称为自然(natual)边界条件;在文档中用<N>来标识(在程序中N型边界不支持离散Galerkin投影,对混合Garlerkin法的适应性未知),同下:(依次是齐次/非齐次/时间相关边界/VCS高阶压力边界)\par
+\begin{lstlisting}[frame=single,numbers=left]
+<!-- homogeneous condition -->
+<N VAR="u" VALUE="0" />
+<!-- inhomogeneous condition -->
+<N VAR="u" VALUE="x^2+y^2+z^2" />
+<!-- time-dependent condition -->
+<N VAR="u" USERDEFINEDTYPE="TimeDependent" VALUE="x+t" />
+<!-- high-order pressure boundary condition (for 
+				IncNavierStokesSolver) -->
+<N VAR="u" USERDEFINEDTYPE="H" VALUE="0" />
+\end{lstlisting}
+\par
+
+第三种是周期边界条件,用\textbf{P}进行标识;只支持连续Garlerkin投影;一般对于出入面的取值,用面ID进行赋值即可,如下例;另外也可以通过旋转进行一些其他操作(详见user guide 3.3.5.3节);
+
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+Example:
+<BOUNDARYREGIONS>
+  <B ID="0"> C[1] </B>
+  <B ID="1"> C[2] </B>
+</BOUNDARYREGIONS>
+
+<BOUNDARYCONDITIONS>
+  <REGION REF="0">
+  	<P VAR="u" VALUE="[1]" />
+  </REGION>
+
+  <REGION REF="1">
+  	<P VAR="u" VALUE="[0]" />
+  </REGION>
+</BOUNDARYCONDITIONS>
+\end{lstlisting}
+\par
+
+提一下时间相关的设定;若在边界上设置一个与时间相关的函数,需要改为(USE RDEFINDETYPE="TimeDependent"),时间用参数\textbf{t}进行表示即可;另外,边界也可以选择从文件中加载(FILE="xxx");
+
+
+\begin{itemize}
+	\item{\textcolor{red}{函数(Function)}}
+\end{itemize}
+只讲几个常用到的:\par
+
+第一个是初始条件(初始流场):\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<FUNCTION NAME="InitialConditions">
+  <F VAR="u" FILE="session.fld" />
+  <E VAR="v" VALUE="2">
+</FUNCTION>
+\end{lstlisting}
+\par
+以上是一个初始条件,"u"从"session.fld"流场读取,"v"用2进行赋值(注意从文件读取的<F>标签);\par
+
+第二个是体积力(等)条件:\par \label{bffunction}
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<FUNCTION NAME="BodyForce11">
+  <E VAR="u" VALUE="0" />
+  <E VAR="v" VALUE="0" />
+</FUNCTION>
+\end{lstlisting}
+\par
+
+
+第三个是流量条件(其他需求请参考求解器部分);
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<FUNCTION NAME="FlowrateForce">
+  <E VAR="ForceX" VALUE="0.0"/>
+  <E VAR="ForceY" VALUE="0.0"/>
+  <E VAR="ForceZ" VALUE="1.0"/>
+</FUNCTION>
+\end{lstlisting}
+\par
+
+因为比较重要,Quasi-3d部分见第\ref{quasi3d}节,会重点讲一下;
+
+\subsubsection{\textcolor{red}{滤波器(Filters)}} \label{xmlfilter}
+用到的也比减少,可能会用到的在如下列出:\par
+
+1. FieldConvert Checkpoints,在运行求解器的同时耦合FieldConvert生成可视化文件;下例:\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<!-- FILTERS>
+<FILTER TYPE="FieldConvert">
+  <PARAM NAME="OutputFile"> timevalue </PARAM>
+  <PARAM NAME="OutputFrequency"> 10 </PARAM>
+  <PARAM NAME="Module"> -r -1,1,-0.5,-0.5,0,2 </PARAM>
+</FILTER>
+\end{lstlisting}
+\par
+FieldConvert相关参数见本册\ref{FieldConvert}章节;
+
+注:这里的<FILTER>有一点需要特别注意,那就是,\textcolor{red}{上述FieldConvert在并行运行求解器的时候顺带只能生成pvtu型的并行存储格式的文件,而不是vtu格式,有可能会造成存储爆炸(膨胀600+倍也是完全有可能的);}
+
+2.\textcolor{red}{历史点(History Points)}
+容易被忽略掉的一个功能,其实相当有用(问就是有笨蛋尝试用FieldConvert的-r功能生成有限元块再去插值了);
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<FILTER TYPE="HistoryPoints">
+  <PARAM NAME="OutputFile">TimeValues</PARAM>
+  <PARAM NAME="OutputFrequency">10</PARAM>
+  <PARAM NAME="Points">
+    1 0.5 0
+    2 0.5 0
+    3 0.5 0
+  </PARAM>
+</FILTER>
+\end{lstlisting}
+\par
+以上内容记录(1,0.5,0)等三个点不同时刻的信息;每10步输出一次;
+
+\subsubsection{耦合(Coupling)}
+主要涉及求解器耦合的问题,目前还有待解读(没怎么用到,而且也没有安装CWiKi);详情见user guide第3.6节.
+
+\subsubsection{力(Forces)}
+规定力的类型,确定力的表达函数名;以以下体积力为例:\par
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<FORCE TYPE="Body">
+  <BODYFORCE> BodyForce11 </BODYFORCE>
+</FORCE>
+\end{lstlisting}
+\par
+以上内容确定了以上\ref{bffunction}部分BodyForce11函数作为体积力而出现;\par
+
+然后是噪声(扰动);不过这里的噪声只支持加全场噪声;
+\begin{lstlisting}[frame=single,numbers=left,language=XML]
+<FORCE TYPE="Noise">
+  <WHITENOISE> [VALUE] <WHITENOISE/>
+  <!-- Optional arguments -->
+  <UPDATEFREQ> [VALUE] <UPDATEFREQ/>
+  <NSTEPS> [VALUE] <NSTEPS/>
+</FORCE>
+\end{lstlisting}
+\par
+几个参数从上到下依次为噪声大小,更新频率(重算噪声,默认初始计算一次),重新添加噪声(步数,默认全程);
+
+\subsection{编写表述}
+其实只是一些注意事项,具体内容可见user guide第3.7节;
+\begin{itemize}
+	\item{1.不论是几维问题,都要使用三维坐标表示点的位置.}
+	\item{2.表达式中常见常数(无理数等),见guide第3.7.1.2节.}
+	\item{3.加减乘除幂等常见操作及一些常见函数略.}
+	\item{4.awgn(p)生成以p为方差的Gauss分布的随机数(用来加噪声).}
+	\item{5.表达式乘一个boolean value用来给函数分段,如$\times (z<1)$}
+	\item{6.表达式与计算速度部分需要看一看~}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{经验之谈}
+
+\subsection{流体基本概念与程序对应}
+一般而言,在程序中设定$x$轴速度为$u$,$y$轴速度为$v$,$z$轴速度为$w$;哪一个轴作为流向轴可以进行人为规定;方向有三个,一般在讨论问题时更喜欢用"流向(Streamwise)、法向(Normal)、展向(Spinwise)"速度(Velocity)这几个概念,而不是"u,v,w";下面也会有一点点涉及;
+
+
+\subsection{归一化处理}
+
+
+时间步长:Nektar++不支持自适应步长,一定要自行设置;但是以下提到的CFL准则却允许设置子步Courant数(\#SubStepCFL).另外
+(\textcolor{red}{若将Driver设定为Adaptive则可以自适应选择网格各区域的多项式阶数});\par
+Courant-Friedrichs-Lewy(CFL)条件是数值解决偏微分方程问题中的一个重要概念.这是一种为了保证数值方法的稳定性，对于时间步长和空间步长设定的一种限制.
+CFL条件是由Richard Courant、Kurt Otto Friedrichs和Hans Lewy在1928年首次提出，主要用于解决对流方程和波动方程等问题.CFL条件通常表述为：
+$$
+C = \frac{U \Delta t}{\Delta x}\leq 1
+$$
+\par
+其中，C被称为Courant数，U是流体的特征速度（例如波速或流速），Δt是时间步长，Δx是空间步长.
+CFL条件的物理意义是：在一个时间步长内，物质或信号不应该传播超过一个空间步长.简单来说，信息在一个时间步进内不应该跳过一个格点.这就保证了在数值模拟中，信息的传递是局部的，从而使得数值解有良好的稳定性。如果CFL条件不满足，通常会导致数值解的震荡和发散.\par
+在一些数值方法中，CFL条件需要更严格，比如在某些高阶方法中，Courant数需要小于1.在实际应用中，也可能需要调整Courant数，以找到一个平衡点，既保证了计算的稳定性，又保持了相对较高的计算效率.\par
+而在设计程序的时间步长时也常常需要用到归一化处理的单位时间,所以就一起放到这里来讲了.\par
+
+Kinvis(动力学粘度$\nu$)一般取$1\times 10^{-6}$,Re可以人为规定,也可以反推(若不在函数中出现则不参与"隐性"计算);
+
+时间步数也可以通过速度等信息归一化处理,不过认为麻烦的话,也不一定要做(整千整百的步数相对容易控制些);
+
+\subsection{插值与网格疏密}
+
+主要就是遇到计算量超大的情况可以用稀疏一点的网格算一下试试水,get基本流之后用FieldConvert插值(interpfld)得到密一点的流场,再用密网格及其流场算后续内容;但是!!!Quasi-3d的Homogenous方向不行,请绕路用(3DH1D专用模式5.5.15)!
+
+
+
+\subsection{边界条件} \label{BoundaryOther}
+主要介绍三类:出流边界条件,入流边界条件和无滑移边界条件;\par
+流出条件的速度场均为Neumann条件(为0),压力场为Dirichilet条件(为0);虽然不太符合物理规律,但是计算软件很多是这样设置的,没什么影响;由于Dirichilet条件是对场本身而言的取值,Neumann则是对于梯度的取值,流出的边界可以概括为:速度场无变化,边界无流出压力;\par
+入流条件的速度场可设置为D型,规定速度型(Velocity Profile),压力一般是给一个恒定的压力梯度(N型,可以为0);\par
+无滑移边界主要指管道的管壁这种类型的壁面,固定,有实体,不与流体发生相对移动(发生相对移动的部分属于MovingBody,user guide有专门讲这个的地方);这种边界一般取贴体速度为0(D型),压力梯度为0(N型);
+
+\subsection{边界扰动}
+
+边界上的扰动,扰动幅值最好要统一;比如说一个2维方形无物理边界的流场,入口直线处的速度依线性分布(流向中间最大速度2$u_0$,两侧速度$u_0$,其余部分速度线性变化,假设噪声强度设置为$5\%$), 优先考虑用平均速度的$5\%$进行扰动,而不是依当地速度的$5\%$进行添加;详细添加细节在跑流场前需要咨询老师添加方式;\par
+另一种是额外添加一个体积力来获得"噪声",目的是给流场足够的诱导从而发生转捩(transition).
+
+
+
+\subsection{准3d配置(Quasi-3D)} \label{quasi3d}
+对应于user guide的第3.3.7节,主要讲用FFT将低维网格扩展到3维进行计算的情况(使用低维网格运行程序即可);\par
+为使用Quasi-3d方式,必须在Solver Info部分添加FFTW的使用及齐次拉伸的使用:
+\begin{lstlisting}[frame=single]
+<I PROPERTY="USEFFT" VALUE="FFTW" />
+<I PROPERTY="HOMOGENEOUS" VALUE="1D" />
+\end{lstlisting}
+\par
+在使用前,需要明确一点:拉伸方向默认为展向(2D到3D,参数为1D;当然,也有流向拉伸的);需要设定的参数有两个:"HomModes?"和"L?",其中"?"可以是X,Y或Z(但二者需要一致); "HomModes?"规定了在"?"齐次方向进行拉伸的"波数";"L?"规定了其次方向的拉伸长度;\par
+\begin{lstlisting}[frame=single]
+<PARAMETERS>
+<P> HomModesY = 4 </P>
+<P> LY = 1.0 </P>
+</PARAMETERS>
+\end{lstlisting}
+\par
+以上规定了一个$xz$平面在y方向上拉伸距离为1,展向波数为4的部分流场配置;\par
+在运行求解器时,因为使用了FFTW,在齐次方向使用并行会大大提高运行效率,为此:
+\begin{lstlisting}[frame=single]
+mpirun -n 128 -N 2 ./INSS --npy 32 Prog.xml Mesh.xml
+\end{lstlisting}
+\par
+同理,若z方向为齐次展开方向,上方应为"--npz",此参数为其次方向的并行任务数;\par
+另外,关于此并行数还有一定要求:\par
+\begin{itemize}
+	\item{1.此数必须为偶数(from: FFT),且为总任务数的因子;}
+	\item{2.在取值上,根据服务器的单节点CPU数计算,此参数在约为单节点CPU数一半时效率相对较高;}
+\end{itemize}
+
+
+\subsection{脚本与并行: CPU杂谈}
+本地跑程序有时也会用到脚本(一般主要是在想要多线程处理数据的时候会用到),写一个For循环基本就能解决问题了;\par
+本地处理多组数据时会遇到上述情况;比如,现有500组流场数据,要将其可视化处理,那么为提高效率就需要并行处理; FieldConvert对vtu数据的生成可以调用用mpi分组生成单组数据,但生成Tecplot式的dat数据却是只能单线程处理单组数据,这时便是以上提到的使用循环的时机;\par
+一般而言,单个CPU默认执行一个任务,视CPU型号而定,一般是2个(比如,在买电脑的时候会看参数8CPU-16线程,就是每CPU最多同时处理两线程任务),也就是单CPU会有两个逻辑内核;具体来说,一个分到4个CPU的虚拟机,在用mpirun执行FieldConvert命令生成vtu文件时,-n参数最大可以设置为8,而超过8就会报错;当然,在服务器上也可以指定:
+\begin{lstlisting}[frame=single]
+#SBATCH --ntasks-per-cpu=2
+\end{lstlisting}
+\noindent
+来实现每核跑2任务,不过没什么意义就是了;\par
+另外,也要区分开"进程"与"线程";总体而言,"进程"指的是任务本身,而"线程"指的是完成任务的最小单元;比如,把"吃饭"看作一个"进程",那么这样一个进程可以细分为"吃米饭"和"吃菜"两个线程,既可以同时处理(并行),也可以分开进行(串行,一般串行不称线程);
+
+\subsection{检查}
+运行程序前一定要从xml程序配置文件的最初开始检查,检查推进格式等选项以及各种条件与参数,下面列一些可能会出错且非常难找来的一些错误(血泪教训):\par
+
+\begin{itemize}
+	\item{各类参数是否小数位数有误}
+	\item{各类条件标签是否都是大写(比如边界条件的<D>)}
+	\item{边界和初值条件等涉及函数类赋值的地方是否缺少或多加系数}
+	\item{边界条件类型是否搞错}
+	\item{时变型边界(尤其在边界加噪声时)"TimeDependent"type是否有设置}
+	\item{网格参数是否都正确(若后续有变换,变换系数是否正确)}
+\end{itemize}
+
+\subsection{动手/善用算例}
+练习使用可以用简单的算例来练手,熟悉程序的使用;每个solver下都有对应的算例,可以运行或者参考;当然,有些部分还有单独的Tutorial,可以尝试自己做一下,对照给出的Compelete中的结果;

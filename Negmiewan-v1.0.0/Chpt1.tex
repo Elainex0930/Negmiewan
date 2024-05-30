@@ -1,0 +1,327 @@
+\chapter{软件介绍与命令、脚本基础}
+\setcounter{page}{1}
+
+
+\section{写在前面:手册食用指南}
+
+本册是CFD软件的快速入门手册,仅用于快速上手,解决一些比较常见的可能遇到的问题(实则不太够用,编写精力与篇幅都比较有限);\par
+本册介绍了软件的主要功能和上手流程,也简要概括了一些自主学习的方法;其中有一部分比较常见的问题也可以速查本手册寻找解决方案;\par
+对应文中有本册内的章节标注的地方都设置了交叉引用,可以直接跳转;紫色字的部分也设置了网页跳转;其余user guide部分请自行翻阅.\par
+本册内容在Nektar++的部分功能讲解时用例有所贯穿,可以点击跳转了解对应参数/选项的由来与传递流程;Gmsh部分主体还是参考其使用手册,此处只会列一些比较常用的命令,不太会的命令可以进入GUI界面设置一个看看结构(Gmsh的guide上写得不够详细),再用脚本编写(有些命令GUI的支持度不太够);
+
+
+\section{主要软件介绍}
+
+这里主要介绍一下CFD常用的一些软件,后续有可能会用到,不过其实网上也能搜到,所以不作赘述了;有需要可自行了解; \par
+CFD常用的软件主要分为三大类型:\par
+\begin{itemize}
+	\item{(1)前处理:网格绘制软件;}
+\end{itemize}
+\begin{itemize}
+	\item{(2)数据生成:本类软件主要通过运行内置计算格式或自行编写计算的格式,生成流场;}
+\end{itemize}
+\begin{itemize}
+	\item{(3)后处理:主要指流场数据查看与观测;}
+\end{itemize}
+\par
+当然,也有一些商业软件内部对其中的2-3部分进行了集成(如Fluent);因为以下主要介绍的包含以下流程,所以此处详细说明下相关流程.
+
+\subsection{前处理/网格绘制}
+CFD实验选手有相当大部分时间都会花在网格处理上,一个好的网格会让计算事半功倍;
+\begin{itemize}
+	\item{Gmsh}
+\end{itemize}
+	\par 是以下主要介绍的网格绘制软件;属于轻量级的开源软件,目前课题使用的网格使用本软件进行绘制完全足够;
+	
+\begin{itemize}
+	\item{ICEM}
+\end{itemize}
+\par 可以参考这篇知乎上的文章,下同(\href{https://zhuanlan.zhihu.com/p/671219971}{网格绘制})
+
+\begin{itemize}
+	\item{COMSOL}
+\end{itemize}
+\par 这个软件见到过有同行在用，好像也还可以。
+
+\begin{itemize}
+	\item{ANSYS Meshing}
+\end{itemize}
+\par ANSYS是很有名的有限元工具/厂商;
+
+\begin{itemize}
+	\item{Spacecliam}
+\end{itemize}
+\par 以上软件均能通过软件内部的GUI界面进行网格绘制;但是Gmsh很多功能需要文本编写;而且本人更倾向于通过码字绘制网格;
+
+\subsection{数据生成}
+
+下文主要介绍的是Nektar++软件(开源);\par
+
+如今CFD工业业界大多还是用商软的(Fluent),据说操作比较傻瓜,软件有GUI界面;\par
+Nektar++为开源软件,没有GUI界面;和Fluent相似,也是内部集成的格式算法;其有使用指南,也有开发者手册,支持对底层代码进行修改;\par
+OpenFOAM也是开源软件,其内部有单独的一套语言系统,需要自行编写计算格式,学术圈子里用OpenFOAM也比较广泛;另外,用Star CCM+的也是大有人在;\par
+组里还有一些其他程序(如openpipe),我也没有用过...\par
+像老师之前用过的,还有\href{https://nek5000.mcs.anl.gov/}{Nek5000}之类的软件,总体而言,总体趋势是朝着使用开源软件靠拢,组内的自由软件因为只能算一些相对简单的几何网格,泛用性远远达不到日常使用需求..
+
+\subsection{后处理/渲染与观测}
+
+以下仅介绍Paraview(开源)与Tecplot(闭源商软);当然,导出数据用matlab,python进行流场/流场切片的数据处理也不失为一种选择;
+
+\section{Linux命令行基础及vim工具}
+
+\subsection{命令行基础/常用命令}
+
+\begin{lstlisting}[frame=single]
+cd xxx(文件夹名称)
+\end{lstlisting}
+\par
+	(1)此命令用于打开文件夹;\par
+	(2)若直接执行cd命令,则返回根目录;\par
+	(3) cd打开的路径可以是相对路径(比如:终端在当前文件夹环境下,可以打开当前文件夹目录下的二级文件夹),也可以是绝对路径("$\sim$"表示根目录,例如,desktop是home根目录下的文件夹,要打开desktop文件夹下的build文件夹,可以执行 cd $\sim$/desktop/build);\par
+	(4) cd .. 返回上级文件夹(..作用在表示路径时同理),返回两级可以用 cd ../.. ,单个.表示当前目录\par
+
+\begin{lstlisting}[frame=single]
+ls
+\end{lstlisting}
+\par
+	列出当前文件夹下的所有文件及文件夹(在纯命令行、没有图形界面时会经常用到这个命令)\par
+
+\begin{lstlisting}[frame=single]
+pwd
+\end{lstlisting}
+\par
+显示当前文件夹路径\par
+
+\begin{lstlisting}[frame=single]
+mkdir xxx
+\end{lstlisting}
+\par
+	创建名为xxx的文件夹;\par
+
+\begin{lstlisting}[frame=single]
+mv 路径1/文件A 路径2
+\end{lstlisting}
+\par
+将路径1下的文件A移动到路径2下;也可以通过该命令实现文件/文件夹的重命名(eg. mv A B 将A重命名为B);\par
+
+\begin{lstlisting}[frame=single]
+rm lll.xxx
+\end{lstlisting}
+\par
+删除名为"lll.xxx"的文件;"rm -r xxx"为删除"xxx"文件夹.\par
+
+\begin{lstlisting}[frame=single]
+cp ...../lll.xxx(源文件路径) ..../(目标路径文件夹)
+\end{lstlisting}
+\par
+复制命令,将前边路径下的文件复制到后边的路径下;\par
+
+\begin{lstlisting}[frame=single]
+bash xxx.sh
+\end{lstlisting}
+\par
+运行名为xxx的sh脚本;
+
+\begin{lstlisting}[frame=single]
+source xxx.sh
+\end{lstlisting}
+\par
+导入环境变量(会在Slurm系统部分详细说明);\par
+
+
+\begin{lstlisting}[frame=single]
+less xxx
+\end{lstlisting}
+\par
+预览名为xxx的文件(无法改动),优势在于速度比较快(不是应用),按q退出;\par
+
+
+\begin{lstlisting}[frame=single]
+tail -123 xxx.txt > out.txt
+\end{lstlisting}
+\par
+输出xxx.txt的最后123行,后边的指向out.txt为输出(可不加);\par
+
+\begin{lstlisting}[frame=single]
+head -123 xxx.txt > out.txt
+\end{lstlisting}
+\par
+(同上)输出xxx.txt的最初的123行,后边的指向out.txt为输出(可不加);\par
+
+\begin{lstlisting}[frame=single]
+ln -s 源文件(路径1) 目标文件(路径2)
+\end{lstlisting}
+\par
+创建快捷方式(Linux中称为软链接),其中源文件路径必须为绝对路径,目标路径可以是相对路径;\par
+
+\begin{lstlisting}[frame=single]
+ls -l quicklink
+\end{lstlisting}
+\par
+查看名为quicklink的快捷方式的原始路径;\par
+
+\begin{lstlisting}[frame=single]
+gnome-system-monitor
+\end{lstlisting}
+\par
+任务管理器(仅本地);\\
+
+\noindent
+\textcolor{red}{注1:在命令行输入路径时,输入1个以上字母后,按Tab键可以进行自动补全.}\\
+\textcolor{red}{注2:快捷键"ctrl+Alt+T"可呼出终端.}\\
+\textcolor{red}{注3: for循环的脚本\href{https://www.linuxmi.com/linux-bash-shell-for-loop.html}{实现}.}\\
+注4:根目录下可通过"vim .bashrc"设置环境变量,如果要改,就需要再加入一些原始系统默认的Bash路径,参考\href{https://blog.csdn.net/wxbug/article/details/123933624}{这篇文章}.
+
+
+\subsection{vim工具}
+\par
+Ubuntu系统可能没有预装vim,只安装了vi,所以需要先安装以下,熟悉以下其使用(服务器上会经常用到,类似的应用还有nano);\par
+
+安装命令
+\begin{lstlisting}[frame=single]
+	sudo apt-get install vim
+\end{lstlisting}
+
+安装后在终端通过命令行打开,命令"vim xxx"(可以不带格式);可以通过以上方式查看编辑已有文件,也可以通过此方式在该目录下创建一个名为"xxx"的文件(需要编辑并保存)\par
+
+一般常用的命令只有以下几种,其余可根据需要自行了解(\href{https://zhuanlan.zhihu.com/p/149515175}{操作指南}and\href{https://vim.fandom.com/wiki/Tutorial}{官方Tutorial});\par
+
+进入vim后是无法编辑的,可按"i"进入编辑状态,在结束编辑时按"esc"键,输入":q"退出(不进入编辑状态也是这样退出);输入"wq"保存并退出(针对编辑过的状态);":q!"强制退出(:wq!同理强制,不过强制退出不会保存);\par
+
+也可按Shift+z进行退出,不过很少有人这样做就是了;\par
+
+再介绍一个操作(一般用于检查网格xml文件),"ctrl+end"快速移动到文档结尾,"ctrl+home"同理;\par
+
+
+
+\section{Slurm调度系统使用入门}
+超算平台均使用Slurm调度系统,天河系与其他超算在脚本语言上略有不同,调度器语言也存在一定差异(不过差别不大);\par
+
+先来讲一讲超算平台运行作业的流程:\par
+\begin{itemize}
+	\item{[1]编写程序所需的输入文件,确定参数;}
+\end{itemize}
+\begin{itemize}
+	\item{[2]编写脚本文件,使用调度器命令运行脚本;}
+\end{itemize}
+\begin{itemize}
+	\item{[3]排队等待或运行,结束;}
+\end{itemize}
+
+\subsection{脚本编写}
+一般而言,脚本编写遵循以下步骤:
+[1]不论是Slurm脚本/服务器脚本,还是对本地脚本而言,均以以下内容为起始.
+\begin{lstlisting}[frame=single]
+	#!/bin/bash
+\end{lstlisting}
+\par
+[2]编写SBATCH的调度指令,格式为
+\begin{lstlisting}[frame=single]
+	#SBATCH -J TEST
+\end{lstlisting}
+\par
+具体的参数对应关系(区分大小写),主要如下:
+
+\noindent
+\begin{tabular}{|c|c|l|}
+	\hline 
+	-J & Job-Name & 指定脚本运行的任务名称 \\ 
+	\hline 
+	-p & Partition-Name & 指定脚本的运行队列(一般服务器运营商 \\
+	   &                & 会给or使用手册会有)  \\
+	\hline 
+	-n & 384 & 脚本运行的并行任务数(一般而言为CP \\ 
+	   &     & U数/默认1核1任务) \\
+	\hline 
+	-N & 8 & 脚本运行调用的节点数 \\ 
+	\hline 
+	--ntasks-per-node= & 64 & 单节点调用CPU数(单节点24/32/56\\ 
+	                   &    & /64核不等) \\
+	\hline 
+	--exclusive &  & 独占节点\\ 
+	\hline 
+\end{tabular} 
+\par
+除此之外,还有许多可选参数,超算的手册上也不一定会写,可以参考Slurm的\href{https://docs.slurm.cn/}{官方指南},或者在服务器命令行输入SBATCH --help;下面再额外列出几个参数作为了解:
+\begin{itemize}
+	\item{[1]-c 指定CPU数,一般默认1任务1CPU,效率相对较高,不用额外设置;}
+	\item{[2]- -mem= 指定调用的内存大小;一般不设置此参数,系统默认将该CPU所有可用内存预分配下来;}
+	\item{[3]- -mem-per-cpu= 单cpu调用内存大小;}
+\end{itemize}
+\par
+然后加载环境(主要是MPI及编译器),代码如下:
+\begin{lstlisting}[frame=single]
+source env.sh
+\end{lstlisting}
+\par
+
+一般来说,因为在服务器上并行跑程序,需要mpirun,代码如下(以不可压不稳定NS求解器为例)
+\begin{lstlisting}[frame=single]
+mpirun -np 384(n后参数) ./.../INSS --npz 32 配置.xml 网格.xml
+\end{lstlisting}
+\par
+至此,脚本编写完成.运行脚本只需
+\begin{lstlisting}[frame=single]
+sbatch -n 384 INSSBash.sh(脚本文件名)
+\end{lstlisting}
+\par
+其中"-n 384"可以换成"-N 8",亦或者省略不加(--npz是Nektar++指定的z方向FFTW并行数,在讲解IncNavierStokesSolver的时候会讲到);\par
+\textcolor{red}{注:".sh"文件与".slurm"文件在服务器Slurm环境下区别不大.}
+
+\subsection{调度器常用命令}
+常用命令可以参考\href{https://docs.slurm.cn/master/quick-start-user-guide.-kuai-su-ru-men-yong-hu-zhi-nan}{Slurm官方文档}或者比较容易找到的各大超算平台的用户指南,如\href{https://docs.hpc.sjtu.edu.cn/job/slurm.html}{上交超算用户手册};\par
+
+下面列出几个常用命令:\par
+
+\begin{tabular}{|c|l|}
+	\hline 
+	sbatch & 提交运行脚本(可下线) \\ 
+	\hline 
+	salloc & (几乎不用此命令)运行脚本(下线则停止运行) \\ 
+	\hline 
+	squeue & 查看排队或作业状态,查看JOB\_ID \\ 
+	\hline 
+	sinfo  & 查看各节点状态  \\ 
+	\hline 
+	scancel & +JOB\_ID 可取消任务 \\ 
+	\hline 
+\end{tabular} 
+
+\subsection{module环境加载}
+服务器上环境通常通过module命令加载;\par
+
+\begin{lstlisting}[frame=single]
+module purge
+\end{lstlisting}
+\par
+清除所有已经搭载的环境;
+
+\begin{lstlisting}[frame=single]
+module load ....(eg.compiler/intel/2017.5.239)
+\end{lstlisting}
+\par
+加载环境(例为intel-2017编译器-假定);
+
+\begin{lstlisting}[frame=single]
+module rm(unload也可以) ....
+\end{lstlisting}
+\par
+卸载环境;
+
+\begin{lstlisting}[frame=single]
+module avail
+\end{lstlisting}
+\par
+查看所有可用环境;
+
+\begin{lstlisting}[frame=single]
+module list
+\end{lstlisting}
+\par
+
+
+\section{额外事项}
+\subsection{Ubuntu上的Python部署}
+主要是有些地方会用到Python脚本,如果在本地跑的话,Ubuntu本地的Python 2.7.x不太够用, Python 3.5安装额外的需要使用的库的时候可能会涉及pip版本导致的无法安装的问题;所以这就需要再装一个更高的,有更好适配性的本地Python版本(因为系统对Ubuntu等系统预装的Python版本有较强的依赖性-比如卸载会导致浏览器打不开等,所以按照教程直接安装即可);\par
+
+\href{https://blog.csdn.net/qq_35743870/article/details/125903040}{这个}是目前找到的最完备的一个部署教程,按照教程安装对应所需版本即可;使用时用Python3.x aaa.py(x为对应大版本号,有预设)呼出即可;
