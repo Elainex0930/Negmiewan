@@ -13,15 +13,9 @@ Une brief introduction de Nektar++/Gmsh/Paraview/FORTRAN;
 
 [Since a bad bahavier after deep depression (during transition), time to update will be a matter maybe.]
 
-如有需要请选择以下联系方式其一DM即可(本鸽王几乎都会不定期回复):
+如有需要请选择主页联系方式其一DM即可(本鸽王几乎都会不定期回复);
 
-[If any problems, send a mail or a message to me please! and my ids are here below, thank u!!!]
-
-twitter: @Elainex0930
-
-email: elainexing0930@gmail.com
-
-telegram: @Erlburnig
+[If any problems, send a mail or a message to me please! and my ids are there in my profile page, thank u!!!]
 
 
 Update Logs:
