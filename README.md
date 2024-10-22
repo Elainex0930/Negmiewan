@@ -21,3 +21,7 @@ Une brief introduction de Nektar++/Gmsh/Paraview/FORTRAN;
 Update Logs:
 
 v1.0.0: 首次更新; 完成了第1章(引言),第2章(Nektar++入门),第5章(支持库),第6章(额外建议),第7章(FORTRAN入门)的撰写; Nektar++与FORTRAN部分竣工; 完成了第2章的部分完善工作;
+
+v1.1.0: 较大更新; 完善了第1章(引言-VS Code与ssh配置);修正了第2章(Nektar++入门)部分错误;添加第3章网格质量检测与ICEM部分;添加第8章(科研绘图)的撰写; 
+
+to be finished, log time:10/23/2024.
