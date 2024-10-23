@@ -1,0 +1,152 @@
+\chapter{可视化软件}
+\section{Paraview}
+
+\subsection{Paraview的安装}
+Paraview在Windows和Linux都能安装使用;因为服务器问题,建议电脑本地和虚拟机都安装一下,\href{https://www.paraview.org/download/}{下载地址};至于windows就不详细介绍安装了;Linux虚拟机上,用sudo apt-get install paraview安装,用库里相对旧一些的版本应该也没有问题;
+
+\subsection{Paraview的基本操作} \label{Parabasis}
+先说一下Paraview打开问题;用Paraview打开vtu/dat文件时,可以在命令行输入"Paraview xx.vtu"命令打开,也可以用"Paraview"先呼出GUI界面,然后在用File>>Open打开(Windows只能通过这种方式);
+\par
+程序成功加载后,按左侧的"\textbf{Apply}"键确认进行渲染;渲染成功后界面上应该能够看到网格的素体轮廓(图示见第\ref{DishomoExtrude}小节);上方和"Apply"下方都会有一栏可选菜单显示"Solid Color",此处可以调换显示内容;\par
+
+其他的操作和基本按键见下节;\par
+
+做数据的曲线图,Paraview功能不太行,个人建议保存切片数据用Matlab或者Python画图(当然,如果会用R语言,也可以用R作图);
+
+\subsubsection{基本按键与功能介绍}
+加载好数据之后点击\verb apply进行渲染; 经常用的处理主要位于"Pipeline Browser"的上一行,从左到右为"计算器","等值线(面)","切块(Clip)","切片(Slice)","阈值(Threshold)";其他的操作几乎都是通过直接或者间解在其上添加Source(for better description)或者Filter实现的.
+
+\subsubsection{切片(Slice)与切块(Clip)制作}
+分两步:第一步先按上方Slice键从流场数据创建一个切片;第二步在左侧描述栏中第一行输入参考点坐标,第二行输入法向量,点击apply,即可获得一个切片.
+Clip与Slice用法类似,主要用于剪掉数值过大或者过小的数据(从而使待观测区域有更小的取值范围,更容易观察流动结构);也可以搭配Threshold使用,选择性显示数据;\par
+
+\subsubsection{寻找数据(Find Data)}
+从View菜单下找到Find Data菜单进行勾选,会发现右侧出现Find Data功能,这个功能通俗易懂极易上手,不做赘述.
+
+\subsubsection{作沿线的流速分布图}
+先介绍一个简单些的办法:\par
+
+首先选中流场,右键为其Add Filter,在Alphabet中找到Plot Over Line添加即可,然后在左侧栏调节初始和终止点的位置, Resolution是采样点的数量;这个方式的优点在于可以直接用空间坐标而不是采样点标号作为横坐标,但缺点在于没办法提取保存数据;以下介绍另一种方式;\par
+
+Paraview取数据的能力比较奇怪:它不太支持函数化操作:取一条曲线根据某一坐标来绘制流速分布的图线;以下以一个圆管的某一切片举例进行方法说明;\par
+\textcolor{red}{先介绍如何在一条直线上导出流速分布};
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.25]{Round_Slice_Face.png}
+	\caption{z方向流速(w)切片云图}
+	\label{roundsliceface}
+\end{figure}
+
+
+首先,在如上的图\ref{roundsliceface}($xy$平面,$z=3$,上图为z方向速度的切片云图)上先取一条直线(直接创建直线段即可,数据源是整个流场或者是包含直线段的这个切片都无所谓);设置直线的时候,需要设置直线的起点与终点,还有直线上的采样点个数(下方Resolution)三个信息,从下图\ref{addline}的入口添加即可;
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.5]{Add_Line.png}
+	\caption{线(Line)的添加}
+	\label{addline}
+\end{figure}
+选中左侧栏的Line,在下方的信息处便能够对直线的属性进行修改,修改完成点击"Apply"(图\ref{Lineinfo}为修改的信息项,图\ref{Lineinround}为直线图示);\par
+
+
+\begin{figure}[H]
+	\centering  %图片全局居中
+	\subfigure[直线信息]{
+		\label{Lineinfo}
+		\includegraphics[width=0.45\textwidth]{Line_Info.png}}
+	\subfigure[直线图示]{
+		\label{Lineinround}
+		\includegraphics[width=0.45\textwidth]{Line_in_Round.png}}
+	\label{lineresample}
+\end{figure}
+
+然后,点击左侧的新建的Line,点击右键为其添加滤波器(Filter),路径:-> Alphabet -> Resample from Dataset,如图\ref{Resampledataset};\par
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.3]{Resample.png}
+	\caption{对直线从数据集中采样}
+	\label{Resampledataset}
+\end{figure}
+
+然后,会出现一个对话框,让用户选择数据来源和采样的导出对象;其中的Source data arrays就选择最初的流场就可以(如图\ref{Resamplefrom},做好的切片也行),Destination mesh选择此处需要完成重采样工作的Line(如图\ref{Resampleto}),再然后按ok键确认即可;
+
+\begin{figure}[H]
+	\centering  %图片全局居中
+	\subfigure[Source data array]{
+		\label{Resamplefrom}
+		\includegraphics[width=0.45\textwidth]{Resample_From.png}}
+	\subfigure[Destination mesh]{
+		\label{Resampleto}
+		\includegraphics[width=0.45\textwidth]{Resample_To.png}}
+	\label{Fig.main}
+\end{figure}
+
+在按下ok后,左侧会出现Resample的新Object,选中按下边的Apply,并右键添加-> Alphabet -> Plot Data滤波器(如图\ref{Plotdata});此后,左侧会出现一个plotdata的Object,选中并将其可视化(眼睛处)即可得到直线上的速度分布图线(在File->save screenshot处可以保存图线的截图);
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.3]{Plot_Data.png}
+	\caption{绘制直线上的速度分布图线}
+	\label{Plotdata}
+\end{figure}
+
+然后是任一条线沿线的采样;原理和上述过程基本相同,在第一步Source部分添加Geometry -> Poly Line Source 或者Spline Source,然后依次在下方输入线上点的坐标来生成一个Spline近似所求(其余步骤均相同,略);
+
+
+另外,\textcolor{red}{也可以利用Python对保存的数据进行绘图}.\par
+首先,需要选中左侧边栏的\textcolor{red}{ResampleWithDataset},然后在file选项里找到\textcolor{red}{save data},保存数据为csv文件,选中Point data,并选择需要保存的数据内容,利用Python进行画图的脚本此处也留做参考:
+
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+data_base1 = pd.read_csv("data_1.csv", header=0, names
+				=["u1","v1","w1","x","y","z"])
+data_base2 = pd.read_csv("data_2.csv", header=0, names
+				=["u2","v2","w2","x","y","z"])
+
+plt.plot(data_base1["z"],data_base1["v1"], label="case1")
+plt.plot(data_base2["z"],data_base2["v2"], label="case2",
+					       color="violet")
+# plt.yscale('log')
+plt.xlabel("z (streamwise)")
+plt.ylabel("pulse velocity")
+plt.legend()
+# plt.ylabel("velocity fluctuation")
+
+plt.show()
+\end{lstlisting}
+\par
+
+
+\subsubsection{求截面的平均速度(Q)}
+流量法;此处的平均速度是用体平均法算出来的;这个其实比较麻烦,具体的操作方法与文件格式有关系;\par
+先说vtu格式的文件;还是以以上切片为例,若想求其面平均速度,就要对其添加Integrate Variables滤波器来实现(Add Filter -> Alphabet);在对其添加滤波器后,可以在右侧的显示栏中看到如图 界面,
+
+
+\subsubsection{动量厚度的计算}
+(For Mayle's Correlation of Tu assuming)在边界层理论中,动量厚度的定义为$\theta=\int_{0}^{\delta}\frac{U}{U_\infty}(1-\frac{U}{U_\infty})dy$,其中$U_\infty$ 为自由流速度(freestream velocity);观察可知,实际需要计算的只有"$U^2$"的积分,这个可以通过对截面使用两次Integrate Variables滤波器得到.
+
+
+
+\subsubsection{Python Shell}
+个人感觉不经常会用到,但是至少Paraview提供了Track的功能,能录制GUI界面鼠标操作的action然后生成(基于Paraview的)python脚本(Tools>Start Trace);结束录制也在相同的位置;生成的脚本可以用paraview安装目录下的pvbatch.exe去跑;对生成的脚本稍作编辑引入循环,可以提升一定的工作效率(批量处理需要申请服务器资源用pvserver连接后跑脚本处理;不过如何使用脚本进行并行处理还有待研究).
+
+\subsection{Paraview的远程部署}
+有待补充.
+
+\section{Tecplot}
+
+\subsection{Tecplot的安装}
+
+\subsection{Tecplot的基本操作}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

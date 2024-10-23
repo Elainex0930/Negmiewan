@@ -1,0 +1,93 @@
+\chapter{支持库(了解)}\label{surportoo}
+本章节主要介绍以下Nektar软件安装时的各种支持库及其用途.\par
+
+
+\section{编译器}
+编译器仅作了解即可,上文中本地安装Nektar++的时候用的是比较轻量级而且方便安装的gcc编译器;
+\subsection{Intel C++编译器}
+Intel的C++编译器,是针对Intel本家的CPU做过性能优化,有偏向性计算的编译器版本,在Intel CPU上有着比gcc更佳的表现;一般在跑程序的时候还会使用Intel本家的数学库Intel MKL库,甚至Intel MPI.\par
+Intel Compiler的安装都是通过Intel的One-API完成安装的;其中,涉及Intel MPI的安装,在2017前-2018后存在明显不同(也可以不用Intel MPI);
+
+
+\subsection{gcc编译器}
+以下Copy自百度百科:\par
+GCC（GNU Compiler Collection，GNU编译器套件）是由GNU开发的编程语言编译器.GNU编译器套件包括C、C++、 Objective-C、 Fortran、Java、Ada和Go语言前端，也包括了这些语言的库.\par
+GCC的初衷是为GNU操作系统专门编写的一款编译器.GNU系统是彻底的自由软件.
+特别注意,\textcolor{red}{一般而言,不同的同世代编译器和调用的库的不同所产生的性能差异最大不会超过30\%.}
+
+
+\subsection{gfortran编译器}
+与gcc对应的gfortran编译器,是用来编译FORTRAN语言的编译器;当然也有ifortran,同理;FORTRAN语言是比较早期的数学计算机语言,乃至早期的数学包(例如以下的早期的BLAS包,LAPACK包都是用FORTRAN语言编写的);如今很多行业其实还在利用FORTRAN语言进行计算,例如:海洋,气象;不过目前很多都在用FORTRAN 90版本的语言,除非要调用很早期编写的,一直没有修改的程序,才会用上FORTRAN 77;\par
+值得一提的是,下面提到的一些包其实是用C/C++语言编写的,比如经常会用到的FFTW包;\par
+
+
+\section{数学库}
+以下大多内容是百度百科/知乎/库官网转载过来的:
+\subsection{BLAS库与openBLAS库}
+BLAS (Basic Linear Algebra Subprograms)基础线性代数子程序库，里面拥有大量已经编写好的关于线性代数运算的程序.\par
+BLAS（basic linear algebra subroutine） 是一系列基本线性代数运算函数的接口（interface）标准.这里的线性代数运算是指例如矢量的线性组合， 矩阵乘以矢量， 矩阵乘以矩阵等． 接口在这里指的是诸如哪个函数名实现什么功能， 有几个输入和输出变量，分别是什么．\par
+
+BLAS被广泛用于科学计算和工业界，已成为业界标准．在更高级的语言和库中，即使我们不直接使用BLAS接口，它们也是通过调用BLAS来实现的（如Matlab中的各种矩阵运算）.\par
+
+BLAS原本是用Fortran语言写的，但后来也产生了C语言的版本cBLAS，接口与Fortran的略有不同（例如使用指针传递数组），但大同小异．\par
+
+注意BLAS是一个接口的标准而不是某种具体实现（implementation）．简单来说，就是不同的作者可以各自写出不同版本的BLAS库，实现同样的接口和功能，但每个函数内部的算法可以不同．这些不同导致了不同版本的BLAS在不同机器上运行的速度也不同．\par
+
+BLAS 的官网是\href{https://netlib.org/blas/}{Netlib}，可以浏览完整的说明文档以及下载源代码．这个版本的BLAS被称为reference BLAS，运行速度较慢，通常被其他版本用于衡量性能．对于Intel CPU的计算机，性能最高的是Intel的 MKL （Math Kernel Library） 中提供的BLAS．MKL虽然不是一个开源软件，但目前可以免费下载使用(\textcolor{red}{商用好像是收费的})．如果想要免费开源的版本，可以尝试OpenBlas或者ATLAS2．另外，无论是否使用MKL，BLAS 的文档都推荐看MKL的相关页面．\par
+
+另外就是OpenBLAS:\par
+OpenBLAS 是一个基于BSD许可（开源）发行的优化 BLAS 计算库，由张先轶于2013年7月20日发起，并发布OpenBLAS 0.2.7第一个版本.BLAS（Basic Linear Algebra Subprograms 基础线性代数程序集）是一个应用程序接口（API）标准，用以规范发布基础线性代数操作的数值库（如矢量或矩阵乘法），OpenBLAS是BLAS标准的一种具体实现,\href{https://www.openblas.net/}{官网}.\par
+
+本地安装:
+\begin{lstlisting}[frame=single]
+sudo apt-get install gfortran libopenblas-dev
+\end{lstlisting}
+
+\subsection{LAPACK库}
+LAPACK是由美国国家科学基金等资助开发的著名公开软件.LAPACK包含了求解科学与工程计算中最常见的数值线性代数问题，如求解线性方程组、线性最小二乘问题、特征值问题和奇异值问题等.\par
+
+\subsection{Intel-MKL库}
+前边已经提到过一部分,是Intel的集成数学库;
+
+
+\subsection{FFTW库}
+FFTW意为Faster Fourier Transform in the West，是一个C语言的快速计算离散傅里叶变换库，它是由MIT的M.Frigo和S. Johnson开发的，可计算一维或多维实和复数据以及任意规模的DFT.目前最新版本为3.3.10，其官网地址为：\url{https://www.fftw.org/}。
+
+大量测试结果表明，FFTW库要比其它开源傅里叶变换库或软件要快，因此如果你的程序中包含傅里叶变换的相关计算，FFTW库是一个很好的选择.在Quasi-3D的情况中,往往需要在第三个方向上利用FFT拉伸,会用到FFTW包.\par
+
+本地安装:
+\begin{lstlisting}[frame=single]
+sudo apt-get install libfftw3-dev
+\end{lstlisting}
+
+
+\subsection{ARPACK库}
+Arpack (ARnoldi PACKage)最初是一个 Fortran 语言编写的，用于求解大型本征方程的程序库，其主要算法是 Arnoldi 循环,在Nektar++中的使用主要体现在稳定性分析．\par
+本地安装:
+\begin{lstlisting}[frame=single]
+sudo apt-get install libarpack++2-dev
+\end{lstlisting}
+\par
+安装时的依赖库有OpneBLAS库,用以上命令安装ARPACK会自动安装OpenBLAS.
+
+\subsection{netcdf库与pnetcdf库}
+不详细介绍了,主要是多维的空间数据,在海洋和气象上用的比较多;组里老师写的磁流体也会调这个库;
+
+
+\subsection{hdf5库}
+HDF5 (Hierarchical Data Format) 由美国伊利诺伊大学厄巴纳-香槟分校 UIUC (University of Illinois at Urbana-Champaign) 开发，是一种常见的跨平台数据储存文件，可以存储不同类型的图像和数码数据，并且可以在不同类型的机器上传输，同时还有统一处理这种文件格式的函数库.HDF5库是文件类型支持库.
+
+
+\section{并行库(MPI库)}
+
+主要有以下几个库:
+\begin{itemize}
+	\item{mpich库}
+	\item{intel-mpi库}
+	\item{openmpi库}
+	\item{mpi-hpcx库}
+\end{itemize}
+\par
+具体信息比较多,可以参考科大超算中心的\href{https://scc.ustc.edu.cn/zlsc/pxjz/201511/W020160527491539600596.pdf}{PPT}.
+
+

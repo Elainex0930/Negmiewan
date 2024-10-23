@@ -1,0 +1,335 @@
+\chapter{科研绘图}
+
+\section{Python绘图}
+Python绘图主要依赖于matplotlib库,数据处理依赖主要numpy,读取主要依赖pandas,快速上手可以参考知乎上\href{https://zhuanlan.zhihu.com/p/70835617}{这篇文章};具体而言,对于外部数据(通常是csv或者txt格式,亦或者是dat扩展名的文本格式),要先通过pandas库进行数据读取,以下是一个简单的例子:\par
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+data = pd.read_csv("esm.dat", sep="\s+", header=None,
+					    names=["t", "E"])
+
+plt.plot(data['t'],data['E'])
+plt.title('Energy')
+plt.yscale('log')
+plt.ylabel('Energy of Disturbance')
+plt.xlabel('Time')
+plt.show()
+
+\end{lstlisting}
+\par
+以上适用于单图绘制;第5行通过read\_csv方法通过识别分隔符"\\s+"(空格)读取两列的以空格为间隔的一组数据;第8行绘图(线图,点图为plt.scatter);第9,11,12行为图的标题以及y,x坐标轴名称;第10行对y轴取对数尺度(logscale);第13行显示图片;\par
+
+此外还有一些简单功能:\par
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+plt.plot(data['t'],data['E'], markers="o", linestyle="dashed",
+					    legend="cw")
+plt.legend(xxx)
+\end{lstlisting}
+\par
+以上部分将数据点以"o"进行标识,线形为虚线(dashed),图例显示为"cw";其余相对复杂的操作以对ax的操作为例进行说明;\par
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator, AutoMinorLocator
+from matplotlib.pyplot import legend
+
+data = pd.read_csv("profile.txt", sep="\s+", header=None,
+				 names=["y", "v0", "v1", "v5"])
+
+plt.rcParams.update({
+	"text.usetex": True,
+	"font.family": "Computer Modern"
+})
+
+ax = plt.gca()
+ax.plot(data['y'],data['v0'], color="blue", label="$c_w=0$")
+ax.plot(data['y'],data['v1'], linestyle="solid", color="red",
+				 label="$c_w=0.01$")
+ax.plot(data['y'],data['v5'], linestyle="solid", color="violet",
+				 label="$c_w=0.05$")
+# ax.set_title("(a) $\overline{w}$ in vertical", fontsize=15)
+ax.set_xlabel('$x$', fontsize=15)
+ax.set_ylabel('$\\theta$', fontsize=15)
+ax.legend(bbox_to_anchor=(0.9, 0.32), fontsize=15)
+ax.grid(True, which='both', linestyle='solid', linewidth=0.5, 
+				color='gray', alpha=0.2)
+ax.tick_params(axis="both", which="major", direction="in", 
+			width=1.5, length=5, labelsize=15)
+ax.tick_params(axis="both", which="minor", direction="in", 
+			width=0.8, length=3, labelsize=15)
+ax.minorticks_on()
+ax.spines['top'].set_linewidth(1)
+ax.spines['right'].set_linewidth(1)
+ax.spines['left'].set_linewidth(1)
+ax.spines['bottom'].set_linewidth(1)
+x_ticks = [-0.5, -0.25, 0, 0.25, 0.5]
+y_ticks = [-1, -0.7, -0.4, -0.1, 0.2]
+ax.set_xticks(x_ticks)
+ax.set_yticks(y_ticks)
+# ax.xaxis.set_ticks_position('bottom')
+# ax.yaxis.set_ticks_position('left')
+ax.grid(True, which="major", color='gray', alpha=0.2)
+ax.grid(False, which="minor")
+ax.set_xlim(-0.5, 0.5)
+ax.set_ylim(-1, 0.2)
+#ax.xaxis.set_minor_locator(MultipleLocator(0.05))
+ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+\end{lstlisting}
+\par
+\noindent
+\begin{itemize}
+	\item{以上第10到13行设置图片中的字体调用latex进行编译(最好提前安装texlive设置好环境变量);}
+	\item{15行开始的matplotlib用法应该是泛用性最强的用法(兼顾子图);}
+	\item{23行注: 双斜杠是因为识别问题导致的, 在tex中相当于单个斜杠; }
+	\item{第24行的bbox\_to\_anchor方法确定图例位置关于全图的一个相对坐标(显示), fontsize指图例字号; }
+	\item{第25到31行设置网格和刻度,26行的alpha指网格透明度;}
+	\item{第27与29行中"major/minor"指主/副刻度, "direction"指刻度线方向;}
+	\item{31行添加副刻度显示(如果没有);}
+	\item{第32到35行设置坐标区边框线的粗细;}
+	\item{第36-39行设置主刻度;}
+	\item{40-41行设置刻度显示的方位;}
+	\item{42-43行设置主副刻度的网格格式}
+	\item{44-45行设置$x,y$轴的取值范围}
+	\item{46行副刻度生成采用倍数法生成, 如果0不是主刻度,或者公因数很难挑,请放弃使用这个;}
+	\item{47行副刻度生成采用自动线性法,从相邻两个主刻度分为5等份取刻度;}
+\end{itemize}
+
+如果是要画子图并列显示,用以下方法完成设置:(图片为1行2列,多行多列用如axes[1][2]表示子图)\par
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+axes[0].plot(d['t'], d['E'], label='Energy Dt')
+...
+
+axes[1].plot(d['t'], d['E'], label='Energy Dt')
+...
+\end{lstlisting}
+
+\section{Python对tikz与pgfplots的支持}
+
+在绘制Latex文档的用图的时候,为了美观起见可以使用tex的tikz包和pgfplots包进行绘图,数据和绘制要求均通过代码实现;如果只是为了美观,可以先写好Python的代码,然后安装tikzplotlib补丁包(如果是3.10或以上的Python版本,因为支持性问题,需安装Patched版本,\href{https://pypi.org/project/tikzplotlib-patched/}{链接}),在使用的时候于最末尾编写以下内容即可(运行时show一定要注释掉或者删掉):
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+# plt.show()
+
+import tikzplotlib
+tikzplotlib.save("Fig_xxxxx.tex")
+\end{lstlisting}
+\par
+
+但是这个自动输出在网格线灰度、刻度显示、图例位置几大方面还有问题，需要对输出的tex文档进行手动调整! \par
+
+如下图\ref{fig:phv},代码也如下:
+
+\begin{figure}[htbp]
+	\centering{
+		\raisebox{33ex}{\makebox[0pt][l]{(a)}}
+		\scalebox{0.78}{\input{pic/Fig_pvv.tex}}
+		\label{fig:phv}}
+\end{figure}
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+\begin{tikzpicture}
+
+\definecolor{grey}{RGB}{128,128,128}
+\definecolor{lightgrey204}{RGB}{204,204,204}
+\definecolor{violet}{RGB}{238,130,238}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+fill opacity=0.8,
+draw opacity=1,
+text opacity=1,
+at={(0.9,0.08)},
+anchor=south east,
+draw=lightgrey204
+},
+tick pos=left,
+x grid style={grey!20},
+xlabel={\(\displaystyle x\)},
+xmajorgrids,
+xmin=-0.5, xmax=0.5,
+xtick style={color=black},
+xtick={-0.5,-0.25,0,0.25,0.5},
+xticklabels={
+\(\displaystyle {\ensuremath{-}0.50}\),
+\(\displaystyle {\ensuremath{-}0.25}\),
+\(\displaystyle {0.00}\),
+\(\displaystyle {0.25}\),
+\(\displaystyle {0.50}\)
+},
+y grid style={grey!20},
+ylabel={\(\displaystyle w\)},
+y label style={yshift=-2.5ex},
+ymajorgrids,
+ymin=0, ymax=1.2,
+ytick style={color=black},
+ytick={0,0.3,0.6,0.9,1.2},
+yticklabels={
+\(\displaystyle {0.0}\),
+\(\displaystyle {0.3}\),
+\(\displaystyle {0.6}\),
+\(\displaystyle {0.9}\),
+\(\displaystyle {1.2}\)
+},
+minor tick num=4,
+tick style={line width=1.2pt, black},
+minor tick style={line width=0.15pt, black},
+axis line style={line width=0.8pt, black},
+]
+\addplot [semithick, blue]
+table {%
+...
+};
+\addlegendentry{\(\displaystyle c_w=0.05\)}
+\end{axis}
+\end{tikzpicture}
+\end{lstlisting}
+
+其中第33,45,46,47,48行都是后来手动加上去的,第13行position也有有调整;33行平移轴线位置,45行设置副刻度数量,46-47设置主副刻度线粗细,48设置轴线粗细;\par
+
+在文中的插入只需用\verb input 命令对外部的tex文件进行插入即可,例如上文中对图片的插入:\par
+
+\begin{lstlisting}[numbers=left,frame=single,language=Python]
+\begin{figure}[htbp]
+  \centering{
+  \raisebox{33ex}{\makebox[0pt][l]{(a)}}
+  \scalebox{0.78}{\input{pic/Fig_pvv.tex}}
+  \label{fig:phv}}
+\end{figure}
+\end{lstlisting}
+
+\section{gnuplot}
+
+\subsection{快速上手}
+GNUPLOT事实上和GNU没有一点点关系;下边这些是从\href{https://zhuanlan.zhihu.com/p/356438078}{知乎}摘的,这是一段急速入门的万用代码:
+
+\begin{lstlisting}[numbers=left,frame=single]
+############  <100行代码急速入门Gnuplot数据绘图   ############
+### "#" 后边是注释
+### 首先设置输出的格式，支持pdf,png,eps等常用格式
+set terminal pngcairo size 1000,1000 font 'Times New Roman,10'   ## 格式，大小和字体
+set output "plot.png"  ###输出的文件名
+
+#set terminal pdfcairo size 20cm,20cm font 'Times New Roman,12'  ## 
+#set output "plot.pdf"
+
+#set terminal epscairo size 20cm,20cm font 'Times New Roman,12'  ## 
+#set output "plot.eps"
+
+### 可以定义变量和宏，便于后边重复使用
+sx = "set xrange "  ## 例如后边当成宏来引用：@sx ，而不是使用 
+## "set xrange"，你可缩减代码量
+
+### 定义变量，用来设置上下左右的边缘和子图间距离
+left=0.1           
+right=0.95
+bottom=0.1
+top="0.95"
+hspace="0.1"
+wspace="0.15"
+
+###因为是要一张图里4个子图，所以启用了多图模式：
+set multiplot layout 2,2 spacing @hspace,@wspace margins left,
+right,bottom,@top
+
+########## 子图 (1): 绘制函数，设置基本的元素如：
+########## 标题、坐标范围、图例等
+set label "(1)" at graph 0.02,0.03 font ',20' textcolor rgb 'red'
+set title "example"
+set xlabel "This is xlabel with {/Symbol a}=0.1 to 100"
+set ylabel "This is ylabel with X^2_3"
+
+set key top right Left reverse font 'Times New Roman,15'  
+###设置图例格式：位置、字体等
+
+f(x)=sin(x)/x          ###定义函数
+set xrange [0:100]     ###设置x轴范围
+set yrange [-0.5:1.0]  ###设置y轴范围
+set xtics scale 3      ###设置x轴的刻度的长度，是默认的3倍长
+set mxtics 10          ###x轴子刻度的数目
+set mytics 5           ###y轴子刻度的数目
+set log x              ###x轴设置成log
+set style fill pattern 1
+### plot命令开始绘图并设置参数：
+plot f(x) w line linetype 1 pointtype 5 ps 1.0 lc 2 lw 4,\
+f(x) w filledcurves y=0.5 lc rgb 'blue'
+### 上边用到了缩写ps=pointsize.其他也有缩写：
+### 如line=l, linetype=lt, pointtype=pt等等
+
+######### 子图 (2): 数据文件绘图和拟合
+
+reset           ### Gnuplot会继承上边的命令，
+### 所以需要reset取消之前所有的设置
+set title "fitting functions"
+set label "(2)" at graph 0.02,0.03 font ',20'  
+textcolor rgb 'red'
+@sx [0:11]      ###这里引用了宏
+set yrange [0:11]
+set key bottom right font ",14" spacing 2
+g(x) = a*x**2 + b*x + c         ###定义函数并拟合，参数为a,b,c
+fit g(x) "data.txt" u 1:2 via a,b,c ###定义函数并拟合
+key_g= sprintf("fits without yerror:\ng(x) = %5.3f*x^2 + 
+%5.3f*x + %5.3f",a,b,c)
+h(x) = d*x**2 + e*x + f
+fit h(x) "data.txt" u 1:2:3 yerror via d,e,f
+key_h= sprintf("fits with yerror:\nh(x) = %5.3f*x^2 + 
+%5.3f*x + %5.3f",d,e,f)
+set xlabel 'xxxx' rotate by 45
+plot "data.txt" u 1:2:3 w yerror pt 5 ps 1.0 lc 
+rgb 'blue' title "data",\
+g(x) w line linecolor rgb 'red' title key_g,\
+h(x) w l lc rgb 'green' title key_h
+
+######### 子图 (3)：统计和填充
+reset
+set key left top box
+set label "(3)" at graph 0.02,0.03 font ',20'  
+textcolor rgb 'red'
+df='data.txt'                ###这里使用文件里的数据绘图
+
+stats df u 1:2 name "A"      
+###统计数据的1和2列，并将统计结果存入A中
+
+print A_min_x, A_min_y       
+###可以打印出A中统计的x的最大和最小值
+
+@sx [A_min_x-1: A_max_x + 1] ###根据统计数据设置x轴范围
+set yr [A_min_y-1: A_max_y + 1]
+set arrow from A_min_x,A_min_y+2 to A_min_x,A_min_y ###绘制箭头
+set label 'Min.' at A_min_x,A_min_y+2.3 center
+set arrow from A_max_x,A_max_y-2 to A_max_x,A_max_y
+set label 'Max.' at A_max_x,A_max_y-2.3 center front
+set xlabel 'xxxx' textcolor rgb 'red'
+set style fill solid 0.5 
+#set style fill pattern 3
+plot df u 1:2 w filledcurves y=2 lc rgb 'seagreen' title 'fill 
+with y=2',\
+df u 1:2 w lp pt 4 ps 0.9 lc rgb 'red' lw 2,\
+[3:6] A_mean_y w l dt '--' lw 2 lc rgb 'black' title "mean"
+
+######## 子图 (4):直方图
+reset
+set label "(4)" at graph 0.02,0.03 font ',20'  
+textcolor rgb 'red'
+set style data histogram
+set style fill solid 1.0 border lt -1 
+set boxwidth 1.0
+set key at 1.5,7  box font ',15' reverse
+set yr [0:10]
+set xtics ("A" 0, "B" 1, "C" 2, "{/Symbol b}" 3, "{/Symbol S}" 4)
+set xlabel 'xxxx' offset 0,-1
+plot "data.txt" u 1 title 'histogram' lc rgb 'seagreen',\
+"data.txt" u 0:($1+0.5):1 w labels title ""
+
+unset multiplot  ###退出多图模式，完成绘图并保存
+\end{lstlisting}
+\par
+
+
+

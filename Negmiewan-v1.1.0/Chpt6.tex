@@ -1,0 +1,821 @@
+\chapter{FORTRAN 90速通指南}
+
+因为组里改过的程序有是基于Fortran 90编写的,也就催生了学习F90的需求(尤其是改程序的时候);但是系统学习一门语言时间成本又相对较高,所以此处便有了这版速查手册);此处看完应该可以基本达到无障碍看程序的水平;\par
+
+此外,也有一点需要明确:F90向下兼容F77,所以F77程序理论在F90中均能跑通(所以不需要再看77啦),但是F95因为没有接触过,所以情况未知;\par
+
+下文默认已掌握至少一门编程/计算语言(C/C++/Python/Matlab/R/JAVA),其底层的基础逻辑(运算顺序,运算符号等)基本是一致的,便不再赘述,使用时按照习惯走即可(不同的地方会单独列出来);因为时间和篇幅有限(而且也确实用不到),所以关于指针的部分就不讲了,不过这门语言有指针的!
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+\section{基础知识与程序书写}
+\noindent
+1."!"开头是注释语句;\\
+2.设置变量名称需要注意的几点:
+\begin{itemize}
+	\item{(1)表意时单词连接用"\_"而不是"-",否则名称非法;}
+	\item{(2)名称里不能出现"."字符;}
+	\item{(3)非字母不能作为第一字符;}
+	\item{(2)名称里不能有空格;}
+\end{itemize}
+
+\noindent
+3.F90的程序单元架构主要分4类:
+\begin{itemize}
+	\item{(1)主程序单元(至少1个);}
+	\item{(2)外部子程序单元(如函数程序等,不调用外部程序,可作为子程序被调用,一般由FUNCTION或者SUBROUTINE开头);}
+	\item{(3)模块单元(过程接口,可认为是允许调用外部程序单元的子单元,用MODULE开头);}
+	\item{(4)块数据单元(BLOCK DATA,不可被执行);}
+	\item{注:(1-3)可包含内部子程序;}
+\end{itemize}
+
+
+\noindent
+4.程序结构(主程序):\\
+	主程序	$\,$ PROGRAMME语句: PROGRAMME xxx \par
+		 $\;\;$ 说明部分(内部,派生,数组,指针数据的说明) \par
+		 $\;\;$ 操作部分(非说明语句,以上至少应有一个可执行语句) \par
+		 $\;\;$ 内部子程序部分(CONTAINS hhh<-子程序名称) \par
+		 $\;\;$ END语句: END 或者END PROGRAMME xxx
+
+
+\noindent
+5.关于语句:主要是可执行与不可执行两类(听君一席话,如听一席话),执行是操作语句,不可执行是描述语句(如数据类型描述等);有一个执行顺序需要捋顺,否则会报错,见下图\ref{F90-sentences}.
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.1]{F90_sentences.png}
+	\caption{(从书上挖过来的)语句执行优先级列表}
+	\label{F90-sentences}
+\end{figure}
+
+
+\noindent
+6.关于数据类型,见下图\ref{F90-datatype}.
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.1]{F90_datatype.png}
+		\caption{(书上挖过来的)数据类型一览}
+		\label{F90-datatype}
+\end{figure}
+
+\par
+
+7.写表达式换行但不间断在行尾加"\&".
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{数据结构与基础程序}
+
+\subsection{数据类型}
+数据类型一共有5种:整型(integer),\textcolor{red}{实型(real)},\textcolor{red}{复型(complex!!!)},字符型(character)和逻辑型(logical,\textcolor{green}{注意:不是boolean!!}).存储的位数可以具体参数化,如下图\ref{F90-datakind}.
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.15]{F90_datakind.jpg}
+	\caption{(书上挖来的)数据类型一览}
+	\label{F90-datakind}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{常量}
+而常量也有同样的类型,字符型需按字符串处理,逻辑值只能进行逻辑运算(按-1/0计:允许某些情况下按整型参与计算),其余均为算数型常量;
+\par
+
+其中,实型常量分两种;一种是小数(浮点数)形式,另一种是指数形式;指数形式有两种标识,这个会常用到:一个是e(或者E),E后幂指只能是整数;另一种是d(或者D),这种只能指定其为双精度实数(说人话就是:Kind默认为4,此处加d后Kind恒等于8,无法指定其他数),d后仍接整数,用法与e相同;
+\textcolor{red}{算程序的时候尤其要小心,若数据小于$-1.117549435 \times 10^{-38}$,很有可能就已经达到Fortran语言设定限制的运算精度了,所以很有可能会出现数据强烈震荡的现象(画图来看),其实是这个原因;}
+\par
+
+而复型常数由两个实型指定;比如(25,12)指25+12i;\par
+
+字符型有三种(一般字符串/H字符串/C字符串,H可指定长度,C可存储非打印字符如$\setminus$n)用单引号双引号括起赋值均可,只需前后一致;字符串内部需要引号时建议与两侧的交替使用;\textcolor{red}{字符串区分大小写;}\par
+
+逻辑型只有两个值".true."和".false.";上文提到过可按整型处理,但注意\textcolor{red}{.true.的值为-1,.false.值为0}(其值是根据二进制数换算过来的,比如.true.每个存储位都是1所以才视为整数-1);\par
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{变量}
+变量直接进行指定即可(类型同上);另外,也可进行隐式(implicit)变量声明(优先级比显式低,尽量避免重复声明导致的冲突);声明句如下:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+REAL e,f
+IMPLICIT INTEGER(a,b)
+INTEGER(KIND=2) g
+\end{lstlisting}
+\par
+
+在声明整型变量时"::"符号代表可直接赋初值(若加了"::"没赋值则该变量值为0),不加则不能,如下例:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+INTEGER::g=22,h  !g=22,h=0
+\end{lstlisting}
+\par
+
+几点注意事项:
+\begin{itemize}
+	\item{(1)KIND=1的整型声明可改用BYTE进行;}
+	\item{(2)INTEGER(i)与INTEGER*i等价;其余类型同理;}
+	\item{(3)复数只能进行显式声明;}
+	\item{(4)字符型可声明长度(如下例);}
+\end{itemize}
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+CHARACTER(LEN=8)t,u,i,o
+\end{lstlisting}
+\par
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{表达式}
+下面来说计算与表达式:\par
+表达式分为4种:算数/关系/逻辑/字符;对于算数表达式,"**"指指数运算;对于字符串表达式,主要涉及取子串和连接两个操作.如下例:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+CHARACTER::t='qwerty',p,q
+p=t(2:4)   !p为wer
+q=p//t     !q为werqwerty
+\end{lstlisting}
+\par
+
+关系表达式主要输出逻辑值(大小可直接用==,<等符号,也可用.LE.表示<,\LaTeX 也有类似写法);\par
+
+逻辑表达式运算符大赏:".NOT."(非),".AND."(与),".OR."(或),".XOR."(异或),".EQV." (等),".NEQV."(不等);真值表略;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{输入与输出}
+输入语句如下(基本相当于scanf):
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+READ *,i,j
+\end{lstlisting}
+\par
+
+其中,"*"指从隐含的输入设备(如键盘中输入数据,当然也可推入-如下例,会把input文件里的值推给f90文件再执行),"*"前后的空格都可有可无;每个READ都从新的一行开始读取数据;在读取时逗号和空格可混合使用;若同时在一句中对多种类型的变量进行读取,分批(多用几次回车)输入也是可行的;另外,在输入时用"n * p"可进行重复输入(比如"3*25"相当于连续输入3个25).
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+ifort xxx.f90 < input
+\end{lstlisting}
+\par
+
+
+输出语句类似:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+PRINT *,i,j
+\end{lstlisting}
+\par
+输出时系统默认宽域输出,同一命令同时输出几个量的时候,中间会自动插入空格.
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+PRINT *,"i=",2345  !结果为i= 2345(2345前有一个空格)
+\end{lstlisting}
+\par
+
+逻辑型的输出为"T"或者"F".
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{参数与函数}
+参数一般指不变的常参数(如$e,\pi$),参数的作用域只有该程序内部,且一旦定义好便按照"const"型数据进行处理,不能修改;参数可以是常值、字符或者逻辑表达式等,且必须定义在可执行表达式前(也就是放在声明区,否则会有逻辑错误);
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+PARAMETER (pi=3.1415926535897384626)
+PARAMETER (euler=2.714828)
+\end{lstlisting}
+\par
+
+至于函数,一共两种(与其他面向过程语言类似),标准函数与自定义;标准函数诸如SQRT/SIN/ABS等,略(都是些常用函数,下边会在图\ref{F90-normalfunc}列一下),自定义的情况涉及东西比较多,后边单独讲;
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.12]{F90_normalfunc.jpg}
+	\caption{(书上挖的)常用标准函数表}
+	\label{F90-normalfunc}
+\end{figure}
+
+再介绍一下END/STOP/PAUSE三个语句及其用法;\par
+END用于终止主程序运行(当然整个程序也是,END后的代码为无效代码,不会执行);STOP直接终止程序运行;PAUSE是挂起,按回车继续(用于调试);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{带格式的输入输出}
+
+可以用FORMAT命令标明输入输出格式,按照行数从PRINT等命令中进行指定,如下例,READ指定用第三行指定的格式,两个数都是占三字符位的整数(I)(X指定空格):
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+READ 3,m,n
+...
+FORMAT(I3,I3)
+\end{lstlisting}
+\par
+格式编辑符可用","或者"/"进行间隔;一个比较偷懒的方式是直接将格式写在READ/PRINT中,比如:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+READ "(I3,I3)",m,n
+PRINT "(1X,'m+n=',I4)",m+n
+\end{lstlisting}
+\par
+以下是编辑符表\ref{F90-refsym}:
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.16]{F90_refsym_1.jpg}
+	\includegraphics[scale=0.11]{F90_refsym_2.jpg}
+	\caption{(书上的)编辑符表}
+	\label{F90-refsym}
+\end{figure}
+
+单看编辑符表可能会有点懵(这和上边示例也不一样哇ww);其实是这样:大写字母是标识符,后边是可加参数;以实数为例[r]Fm.d,具体来说,5F7.3指的是整数部分7位,小数部分3位,重复5次(其他编辑符同理);
+
+另外特别需要注意的地方:
+\begin{itemize}
+\item{(1)小数型如果输入数据原本有小数的话,按照原本带宽进行读入,格式限定不起作用;输出时会被四舍五入;}
+\item{(2)复数型输入实部和虚部之间用一个空格相连;}
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{选择与循环结构}
+条件语句IF:逻辑IF句可执行(如下)
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+IF(i<j) PRINT *,'NO!!'
+\end{lstlisting}
+\par
+另一种就是块IF语句,是包含END IF/ELSE/ELSE IF(多分支)的结构快(方式与其他语言基本相同,不过有THEN,同下例):
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+IF(A<B) THEN
+  IF(B<C) THEN
+    WRITE *,A
+  ELSE
+    WRITE *,B
+  ENDIF
+ENDIF
+\end{lstlisting}
+\par
+注:\textcolor{red}{不论是条件还是循环,都十分建议做好对齐工作!!}
+
+还有CASE语句(对应到C中的switch,此处为SELECT),见下例(一个不管怎么选都会输出2的块):
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+READ *,S
+SELECT CASE (S)
+CASE 1
+  PRINT *,S+1
+CASE 2
+  PRINT *,S
+CASE DEFAULT !这个DEFAULT不是必须有的
+  PRINT *,2
+END SELECT
+\end{lstlisting}
+\par
+
+循环分为3大类,分别为"计数型(DO)","当型(DO WHILE)","直到型(第一步不判别先循环这种实现不了,可以改while出口条件实现)";下边分别介绍.\par
+DO型基本相当于matlab中的For循环,可指定循环变量的初值,终值以及步长(可缺省,默认为1);如下例就是一个以2为步长,1为初值,10为终值,循环变量为v的程序块;
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+DO v=1,10,2  !顺序为:初值,终值,步长(可缺省,默认1)
+PRINT *,v    !v也可以提前进行声明
+END DO       !DO循环可命名,如Odd: DO v=...,
+             !不过结束必须为END DO Odd
+\end{lstlisting}
+\par
+
+当然,还有一种方式不用设定上述条件,只需设置跳出条件直接跳出循环即可:
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+DO
+....
+IF (x<1) EXIT
+END DO
+\end{lstlisting}
+\par
+
+DO WHILE循环格式与用法类似其他各语言的while循环;
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+DO WHILE (x<1)
+...
+END DO
+\end{lstlisting}
+\par
+
+最后介绍以下跳出.其中EXIT已经用到过了(用于终止循环),还有一个CYCLE(跳回循环最开始重新执行);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{数组}
+FORTRAN的数族序号比较有特点(因为标号可以自定义上下界,不必从0or1开始),举个栗子:
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+REAL ddr(5:9)  
+!产生了一个一维数族,元素为ddr(5)...ddr(9)共5个
+
+INTEGER ppr(-3:3,0:1)
+!产生了一个二维数组,元素ppr(-3,0)...ppr(3,1)共14个
+
+INTEGER::num(3)=(/12,23,34/)
+!用"::"允许在声明中赋值,如未说明,索引从1开始
+\end{lstlisting}
+\par
+
+若下界超过上界,默认数组大小为0(合法);另,关于维数:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+!DIMENSION的几种用法(嫌麻烦可不用)
+!一般case2同一赋维数用处较大
+!CASE 1
+INTEGER day
+DIMENSION day(3)
+
+!CASE 2
+INTEGER,DIMENSION(3):: num,pp,op(1,1)
+!此处num,pp均一维,op因为已经指定,故不受影响
+\end{lstlisting}
+\par
+
+数组元素的引用同MATLAB(直接小括号定位即可,略);索引元素若为浮点数则自动取整处理;
+
+至于数组的赋值,也可以用循环进行赋值;如以下隐含型DO循环赋值(两种赋值等价):
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+READ *,((a(i,j),j=1,N),i=1,M)
+
+DO i=1,M
+  DO j=1,N
+    READ *,(i,j)
+  END DO
+END DO
+\end{lstlisting}
+\par
+
+或者,利用数组构造器进行赋值,如下例(可以使用已知变量/分块赋值):
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+INTEGER::i=2
+INTEGER num(6)
+
+!一维数组的赋值
+num=(/1,2,3,4,5,6/)
+num=(/1,i,3,4,5,6/)
+
+!也可以将其直接赋值为二维数组,下例为2行3列情况
+num=RESHAPE(/1,2,3,4,5,6/),(/2,3/)
+
+!以下分段赋值也可以
+INTEGER nuu(2,3)
+nuu(1,:)=(/1,2,3/)
+nuu(2,:)=(/4,5,6/)
+\end{lstlisting}
+\par
+
+再或者,利用DATA语句赋值:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+INTEGER m,n,nuu(-5:5)
+
+DATA m,n/2*1/
+DATA nuu/1,2,5*6,8,9,10/
+!上一行nuu为[1,2,6,6,6,6,6,8,9,10]
+\end{lstlisting}
+\par
+
+甚至可以进行条件赋值(数组赋值专用IF:WHERE+[ELSEWHERE/ENDWHERE]语句):
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+INTEGER nu(-5:5)
+
+DATA nu/1,2,5*6,8,9,10/
+PRINT *,nu
+!此时输出1 2 6 6 6 6 6 8 9 10
+
+WHERE (nu>7) nu=nu-7
+PRINT *,nu
+!此时输出1 2 6 6 6 6 6 1 2 3(以下也等价)
+
+WHERE (nu>9)
+  nu=nu-7
+ELSEWHERE (nu==8)
+  nu=nu-7
+ENDWHERE
+!ELSEWHERE也可以不加条件表示剩余全部
+\end{lstlisting}
+\par
+
+最后一部分介绍动态数组;动态数组缺点是存储开销较大(\textcolor{red}{元素个数不确定的时候用这个}),如下例;
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+INTEGER,DIMENSION(:),ALLOCATABLE::sc
+INTEGER n
+read *,n
+ALLOCATE(sc(n))
+
+!格式:下例2维动态数组,可灵活调整
+!     ... DIMENSION(:,:),ALLOCATABLE::(数组名)
+!     ALLOCATE(...)  或在上一行不写明维数直接赋值
+\end{lstlisting}
+\par
+
+动态数组不用时还可以拆掉释放存储(用DEALLOCATE,工具人的通常结局):
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+!接上例
+DEALLOCATE(sc) !释放sc数组的存储空间
+\end{lstlisting}
+\par
+
+最后的最后,是数组中常用的矩阵函数表,如下图\ref{F90-matfunc};
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.17]{F90_matfunc.jpg}
+	\caption{(挖的)矩阵函数表}
+	\label{F90-matfunc}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{自定义函数与子程序}
+
+说到底,自定义函数和子程序主要是为了问题定制化,计算规范化,功能模块化,避免一定程度的重复工作,追求更高效率;子程序可以看作是附功能块(utilities),单独编写到一个程序文件里,等到用的时候再进行调用;\par
+
+比如以下程序(例子可能比较烂),假如已知一个班所有人成绩,现在要算班级每个人距离平均成绩的离差,再输出;实际上可以分成两步(子程序)进行;第一个子程序用于计算均值再算离差,第二个程序输出离差;
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+PROGRAMME main
+  PARAMETER (N=30)
+  REAL data(N)
+  CALL remain(data)
+  CALL output(data)
+CONTAINS
+  SUBROUTINE remain(A)
+    INTEGER A(N)
+    REAL::aver=0d0
+    DO i=1,N
+      aver=aver+A(i)
+    END DO
+    aver=aver/N;
+    DO i=1,N
+      A(i)=A(i)-aver
+    END DO
+  END SUBROUTINE remain
+  
+  SUBROUTINE ouput(A)
+    REAL A(N)
+    DO i=1,N
+      PRINT *,A(i)
+    END DO
+  END SUBROUTINE ouput
+END
+\end{lstlisting}
+\par
+
+设计算法的时候一般自顶而下,先设计主流程,然后再对各分流程进一步细化;子程序的分类一般如图\ref{F90-subroutinesorts}所示;
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.12]{F90_subroutinesorts.jpg}
+	\caption{子程序的分类表}
+	\label{F90-subroutinesorts}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{标准子程序}
+这部分类型会比较多,所以只会挑出一些日常有可能会用到的来讲;\par
+标准函数共分9大类:
+\begin{itemize}
+	\item{(1)三角函数:SIN(x)等(弧度),SIND(x)等(度);}
+	\item{(2)数值计算函数:MIN(x),MAX(x),ABS(x)等;}
+	\item{(3)(变量)类型转换函数:FLOAT(x)等;}
+	\item{(4)(变量)类型查询函数:查询最大值HUGE(x),数值精度PRECISION(x);}
+	\item{(5)随机数生成函数:RAN(x),其中x必须为一个KIND=4的整型变量;}
+	\item{(6)日期时间处理函数}
+	\item{(7)字符串处理函数}
+	\item{(8)地址计算函数:LOC(x)以及\%LOC(x)用于计算x的存储地址;}
+	\item{(9)位运算函数}
+\end{itemize}
+
+标准子例行程序有5大类:
+\begin{itemize}
+	\item{(1)程序控制子例行程序:EXIT(),SLEEPQQ(x)程序睡眠x秒;}
+	\item{(2)文件管理子例行程序}
+	\item{(3)随机数生成子例行程序:RANDOM(x)和RANDOM\_NUMBER(x),以及设置随机种子的SEED(size),RANDOM\_SEED(size);}
+	\item{(4))日期处理子例行程序;}
+	\item{(5)数组处理子例行程序:SORTQQ(adrarray,count,size)排序子程序,三个参数分别为一维数组地址、待排序元素个数、数组存储开销KIND;}
+\end{itemize}
+注:此处例行程序为subroutine,需要用CALL进行调用;下例为排序调用示例；\par
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+USE DFLIB
+INTEGER(2) arr(10),i
+DATA arr/1,10,2,9,3,8,4,7,5,6/
+CALL SORTQQ(LOC(arr),10,SRT$INTEGER2)
+...
+END
+\end{lstlisting}
+\par
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{语句函数}
+定义一个用户自定义的表达式函数,比如：
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+F(x,y)=x+y+x*y
+READ *,a,b
+DA=F(a,b)
+\end{lstlisting}
+\par
+语句函数的调用也如上所示;但是也有一些规定,需要遵循,否则会报错:
+
+\begin{itemize}
+	\item{(1)禁止套娃!一个函数要展开全,不能调用其他函数或者自身;}
+	\item{(2)一个语句函数只能有一个返回值;}
+	\item{(3)形参禁止出现数组或下边(作为形参出现),但是已知的数组元素可以调用;}
+	\item{(4)语句函数是单个程序内部定义的,注意定义区域;}
+	\item{(5)语句函数定义可以没有形参,但是括号不能没有;}
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{内部子程序}
+内部函数和本节开头例子中的SUBROUTINE结构差不多,可供参考(注意同一文件/CONTAIN语句位置即可);
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+programme main
+  read *,x
+  print *,f(x)
+contain
+  function f(x)
+    f(x)=x**x
+  end function   !或者 end function f
+end
+\end{lstlisting}
+\par
+
+另外,还可以多次用RETURN语句控制函数何时需要终止;内部子例行程序与内部函数相仿,不同的是没有RETURN,示例可参考本大节最初的程序;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{形参与实参的传递}
+此处只列一些可能用到的点,其他地方凭学过其他语言的直觉也基本不会出错;\par
+
+1.假定大小的数组做形参:在形式数组的维说明的维上界加上"*",称形式数组为假定大小数组(不知道输入的数组的大小的时候用相对合适),例如:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+subroutine sub(A,B,C,n)
+  real A(n,n),B(8,*),C(2*n,*)
+  ...
+end subroutine
+\end{lstlisting}
+\par
+
+注:假定大小数组不允许出现在输入输出表(语句)中,否则会编译出错;且不能用UBOUND、LBOUND、SIZE函数确定数组声明为*的上下界和大小;但是假定形状数组(用":")可完成以上来两个操作；下例:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+subroutine sub(A)
+  real A(:,:)
+  do i=lbound(A,1),ubound(A,1)
+  ...
+end subroutine sub
+\end{lstlisting}
+\par
+
+2.子程序名作实参:如下例;
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+PROGRAMME aliene
+  INTRINSIC SIN
+  EXTERNAL fun,proc,prt
+  REAL fun,f1
+  f1=fun(3.14159/6,SIN)  !调用SIN
+  CALL proc(10,20,prt)   !用prt调用proc
+END
+
+FUNCTION fun(x,f)
+  REAL x
+  fun=f(x)
+END FUNCTION
+
+SUBROUTINE proc(x,y,p)
+  INTEGER x,y
+  CALL p(x+y)           !调用p作为形式子程序
+END SUBROUTINE
+
+SUBROUTINE prt(x)
+  INTEGER x
+  PRINT *,'x=',x
+END SUBROUTINE
+\end{lstlisting}
+\par
+
+EXTERNAL声明外部子程序(or函数),INTRINSIC语句用于声明标准函数;
+
+3."*"作形参:可以利用RETURN提供一个返回值机制(可多个),从略;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{递归子程序}
+也就是允许一定程度的套娃调用;递归函数如下例(求阶乘的递归函数):
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+RECURSIVE FUNCTION factorial(m) RESULT(fact)
+  INTEGER m,fact
+  IF (m==1) THEN
+    fact=1
+  ELSE
+    fact=m*factorial(m-1)
+  ENDIF
+END FUNCTION
+\end{lstlisting}
+\par
+
+递归子程序不用设置RESULT,将fact当作形参即可,略;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{外部子程序}
+允许子程序调用子->子程序,在主程序外侧,用EXTERNAL语句进行加载,详情略;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{派生类型与结构体}
+主要是可以允许用户自定义数据类型;与C语言结构体极为类似;有一个需要主注意的地方,\textcolor{red}{在对成员进行引用时,可以用".",也可以用"\%",不过要尽量保持一致;}如下例:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+PROGRAMME lamort
+  TYPE stuinfo
+    INTEGER number
+    CHARACTER name
+    INTEGER age
+    REAL score
+  END TYPE
+  
+  TYPE(stuinfo) student(30)  !声明stuinfo类变量student
+  ...
+  
+  !赋值
+  student(1)%number=1
+  student(30).name='lidocaine'
+  DATA student(2).age/99/
+  READ *,student(3)          !键入顺序与类型声明时的顺序相同
+  
+  !或者在声明时进行赋值
+  TYPE(stuinfo)::stupind=stuinfo(13,'ropivacaine',99,0)
+  TYPE(stuinfo)::stukind(2)=(/stuinfo(13,'stilnox',50,0),
+                             /stuinfo(7,'agomelatine',2,0)/)
+                             
+  !以下两句输出等价                           
+  PRINT *,stupind
+  PRINT *,stupind.number,stupind.name,stupind.age,
+                                               stupind.score
+END
+\end{lstlisting}
+\par
+注意:派生类型也不允许套娃(套用其他结构);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{文件与设备}
+
+在读入等操作进行时,会涉及到输入输出设备的问题(虽然之前都是用*表示从键盘/显示器输入),以下图\ref{F90-standardgear}所示为标准设备号表.
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.12]{F90_standardgear.jpg}
+	\caption{标准设备号表}
+	\label{F90-standardgear}
+\end{figure}
+
+\par
+
+通过OPEN/CLOSE语句可以打开关闭文件,打开之后,在关闭之前对数据进行修改即可;\par
+
+有一个关于(*,*)类的参数的问题,在下例中稍作说明(后边会详细介绍):
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+OPEN(1,FILE='exam1.in')
+OPEN(2,FILE='exam2.out')
+READ(1,*) (score(I),I=1,N)
+WRITE(2,*) '学生成绩有:',(score(I),I=1,N)
+\end{lstlisting}
+\par
+
+上例从设备1读取"exam1",从设备2打开"exam2",从"exam1"(设备1)获取键盘输入,输出到"exam2"(设备2)上;上表的*/5/6与此处1/2指定内容相同;txt文件可以缺省文件名;
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{文件基本操作}
+文件打开:OPEN;可选参数(部分):
+
+\begin{itemize}
+	\item{(1)UNIT=,指定设备号,设备号要有,"UNIT="可省略;}
+	\item{(2)FILE='',文件名;}
+	\item{(3)ACCESS=,指定存储方式,默认'SEQUENTIAL'顺序,可选'APPEND'追加存取,'DIRECT'直接存取;}
+	\item{(4)DELIM=,指定列表的分隔符;'APOSTROPHE'为'分隔,'QUOTE'用"分隔,'NONE'不指定分隔符;}
+	\item{(5)ACTION=,指定读写属性,'READ','WRITE'(不能读取),'READWRITE';}
+	\item{(6)STATUS=,设置文件状态属性;'OLD'打开已存在文件,'NEW'创建新文件,'SCRATCH'创建临时文件,'REPLACE'替换同名文件;}
+\end{itemize}
+\par
+
+文件关闭:CLOSE;可选参数(部分):
+
+\begin{itemize}
+	\item{(1)UNIT=,指定设备号,设备号要有,"UNIT="可省略;}
+	\item{(2)STATUS=,设置文件状态属性;'KEEP'临时关闭不删除,'DELETE'关闭且删除;}
+\end{itemize}
+\par
+
+文件结束:ENDFILE;可选参数(部分):UNIT(同上);\par
+
+文件输入:READ;可选参数(部分):
+\begin{itemize}
+	\item{(1)UNIT=,指定设备号,设备号要有,"UNIT="可省略;}
+	\item{(2)FMT='',指定写入格式;}
+\end{itemize}
+\par
+
+文件输出:WRITE;可选参数(部分)同READ.\par
+
+文件查询:INQUIRE,可选参数(部分):
+\begin{itemize}
+	\item{(1)UNIT=,指定设备号,设备号要有,"UNIT="可省略;}
+	\item{(2)FILE='',文件名;}
+	\item{(3)EXIST='',查询设备或文件是否存在;}	
+\end{itemize}
+\par
+
+外部设备:可以设置外部设备(如并行口等)输出信息,以下图\ref{F90-outerinstrument}是外部设备表,还有一个食用示例;
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+OPEN(UNIT=1,FILE='PRN')
+\end{lstlisting}
+\par
+
+\begin{figure}[h]
+	\noindent
+	\centering
+	\includegraphics[scale=0.14]{F90_outerinstrument.jpg}
+	\caption{外部设备表}
+	\label{F90-outerinstrument}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{接口与模块}
+
+用接口INTERFACE可代替EXTERNAL增加代码的可读性(说明内部结构);
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+INTERFACE 
+  FUNCTION max(a1,a2)
+    INTEGER max2,a1,a2
+  END FUNCTION
+END INTERFACE
+...
+FUNCTION max(a1,a2)
+  INTEGER max2,a1,a2
+  IF (a1>=a2)
+    max2=a1
+  ELSE
+    max=a2
+  ENDIF
+END FUNCTION
+\end{lstlisting}
+\par
+
+定义模块(module)可以对函数和子程序及参数等进行封装(大型CONTAIN,用USE载入);其中可以通过PUBLIC和PRIVATE声明公共或私有属性(作用域);如下例:
+
+\begin{lstlisting}[numbers=left,frame=single,language=Fortran]
+MODULE uranyl
+  ...
+END MODULE uranyl
+
+SUBROUTINE acetate
+  ...
+  USE uranyl
+  ...
+END SUBROUTINE
+
+PROGRAMME zusammenbruch
+  ...
+  USE uranyl
+  CALL acetate
+  ...
+END
+\end{lstlisting}
+\par
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
